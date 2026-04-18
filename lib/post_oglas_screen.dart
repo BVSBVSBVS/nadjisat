@@ -12,7 +12,6 @@ class PostOglasScreen extends StatefulWidget {
 class _PostOglasScreenState extends State<PostOglasScreen> {
   final _formKey = GlobalKey<FormState>();
   
-  // Sve promenljive
   String? izabranBrend, izabranModel, stanje, godina, precnik, materijal, staklo, mehanizam, vodootpornost, kutijaPapiri;
   final cenaController = TextEditingController();
   final opisController = TextEditingController();
@@ -22,7 +21,6 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
   final ImagePicker _picker = ImagePicker();
   bool isUploading = false;
 
-  // Liste
   final Map<String, List<String>> brendoviIModeli = {
     'Rolex': ['Submariner', 'Daytona', 'Datejust', 'GMT-Master II', 'Oyster Perpetual'],
     'Omega': ['Speedmaster', 'Seamaster', 'Aqua Terra'],
@@ -30,6 +28,7 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
     'Audemars Piguet': ['Royal Oak', 'Royal Oak Offshore'],
     'Seiko': ['Prospex', 'Presage', '5 Sports'],
   };
+  
   final List<String> stanja = ['Novo (Nenošeno)', 'Odlično', 'Vrlo dobro', 'Dobro', 'Za delove'];
   final List<String> materijali = ['Čelik', 'Zlato', 'Titanijum', 'Keramika', 'Platina', 'Karbon'];
   final List<String> stakla = ['Safirno', 'Mineralno', 'Akrilno (Plexi)'];
@@ -53,7 +52,7 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
   }
 
   Future<void> _postaviOglas() async {
-    if (!_formKey.currentState!.validate() || izabranBrend == null || izabranModel == null) {
+    if (izabranBrend == null || izabranModel == null) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Popuni obavezna polja!")));
       return;
     }
@@ -72,15 +71,20 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
         final bytes = await slika.readAsBytes();
         final imeFajla = '${DateTime.now().millisecondsSinceEpoch}_${slika.name}';
         
-        // PAZI OVDE: Promenjeno u 'slike-oglasi' (tvoj naziv)
-        await Supabase.instance.client.storage.from('slike-oglasi').uploadBinary(imeFajla, bytes);
-        final url = Supabase.instance.client.storage.from('slike-oglasi').getPublicUrl(imeFajla);
-        slikeUrls.add(url);
+        // Pokušava oba imena bucketa za svaki slučaj, da te ne bi blokirao onaj 404
+        try {
+          await Supabase.instance.client.storage.from('slike_oglasi').uploadBinary(imeFajla, bytes);
+          slikeUrls.add(Supabase.instance.client.storage.from('slike_oglasi').getPublicUrl(imeFajla));
+        } catch (_) {
+          await Supabase.instance.client.storage.from('slike-oglasi').uploadBinary(imeFajla, bytes);
+          slikeUrls.add(Supabase.instance.client.storage.from('slike-oglasi').getPublicUrl(imeFajla));
+        }
       }
 
       await Supabase.instance.client.from('satovi').insert({
         'user_id': user?.id, 
         'user_email': user?.email,
+        'naslov': '$izabranBrend $izabranModel', // <--- OVO REŠAVA TVOJU TRENUTNU GREŠKU!
         'brend': izabranBrend,
         'model': izabranModel,
         'cena': cenaPoDogovoru ? null : (int.tryParse(cenaController.text.trim()) ?? 0), 
@@ -90,7 +94,6 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
         'stanje': stanje,
         'materijal': materijal,
         'staklo': staklo,
-        // Ove tri kolone moraš dodati u bazu (vidi dole)
         'mehanizam': mehanizam,
         'vodootpornost': vodootpornost,
         'kutija_papiri': kutijaPapiri,
@@ -99,7 +102,7 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
       });
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Oglas postavljen!")));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Oglas uspešno postavljen!")));
         Navigator.pop(context); 
       }
     } catch (e) {
@@ -108,20 +111,54 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
     }
   }
 
-  Widget _buildIOSDropdown(String label, String? value, List<String> items, Function(String?) onChanged) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: DropdownButtonFormField<String>(
-        decoration: InputDecoration(
-          labelText: label,
-          filled: true,
-          fillColor: Colors.white,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Colors.grey.shade300)),
-          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Colors.grey.shade300)),
+  // OVO JE NOVI PRAVI IOS PICKER (ROLLER) ODOZDO
+  void _prikaziIOSPicker(String naslov, List<String> opcije, Function(String) onOdabrano) {
+    showCupertinoModalPopup(
+      context: context,
+      builder: (_) => Container(
+        height: 250,
+        color: const Color.fromARGB(255, 255, 255, 255),
+        child: Column(
+          children: [
+            Container(
+              height: 50,
+              color: Colors.grey.shade100,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  CupertinoButton(child: const Text('Otkaži'), onPressed: () => Navigator.of(context).pop()),
+                  Text(naslov, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  CupertinoButton(child: const Text('Gotovo'), onPressed: () => Navigator.of(context).pop()),
+                ],
+              ),
+            ),
+            Expanded(
+              child: CupertinoPicker(
+                itemExtent: 32.0,
+                onSelectedItemChanged: (index) => onOdabrano(opcije[index]),
+                children: opcije.map((o) => Center(child: Text(o, style: const TextStyle(fontSize: 18)))).toList(),
+              ),
+            ),
+          ],
         ),
-        value: value,
-        items: items.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
-        onChanged: onChanged,
+      ),
+    );
+  }
+
+  Widget _iosPoljeZaBiranje(String label, String? trenutnaVrednost, List<String> opcije, Function(String) onOdabrano) {
+    return GestureDetector(
+      onTap: opcije.isEmpty ? null : () => _prikaziIOSPicker(label, opcije, onOdabrano),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.grey.shade300)),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(trenutnaVrednost ?? label, style: TextStyle(fontSize: 16, color: trenutnaVrednost == null ? Colors.grey : Colors.black)),
+            const Icon(CupertinoIcons.chevron_down, color: Colors.grey, size: 18),
+          ],
+        ),
       ),
     );
   }
@@ -140,7 +177,6 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            // SLIKE
             GestureDetector(
               onTap: _izaberiSlike,
               child: Container(
@@ -166,14 +202,13 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
               ),
             const SizedBox(height: 20),
             
-            // OSNOVNO
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
               child: Column(
                 children: [
-                  _buildIOSDropdown("Brend", izabranBrend, brendoviIModeli.keys.toList(), (v) => setState(() { izabranBrend = v; izabranModel = null; })),
-                  if (izabranBrend != null) _buildIOSDropdown("Model", izabranModel, brendoviIModeli[izabranBrend]!, (v) => setState(() => izabranModel = v)),
+                  _iosPoljeZaBiranje("Brend", izabranBrend, brendoviIModeli.keys.toList(), (v) => setState(() { izabranBrend = v; izabranModel = null; })),
+                  _iosPoljeZaBiranje("Model", izabranModel, izabranBrend != null ? brendoviIModeli[izabranBrend]! : [], (v) => setState(() => izabranModel = v)),
                   
                   Row(
                     children: [
@@ -189,11 +224,12 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
                   if (!cenaPoDogovoru)
                     Padding(
                       padding: const EdgeInsets.only(top: 12),
-                      child: TextFormField(
+                      child: CupertinoTextField(
                         controller: cenaController,
-                        keyboardType: TextInputType.number,
-                        decoration: InputDecoration(labelText: "Cena (€)", border: OutlineInputBorder(borderRadius: BorderRadius.circular(10))),
-                        validator: (v) => !cenaPoDogovoru && v!.isEmpty ? 'Unesi cenu' : null,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: false, signed: false), // SAMO BROJEVI ZA CENU
+                        placeholder: "Cena (€)",
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.grey.shade300)),
                       ),
                     ),
                 ],
@@ -201,45 +237,46 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
             ),
             const SizedBox(height: 20),
             
-            // SPECIFIKACIJE
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
               child: Column(
                 children: [
-                  _buildIOSDropdown("Stanje", stanje, stanja, (v) => setState(() => stanje = v)),
+                  _iosPoljeZaBiranje("Stanje", stanje, stanja, (v) => setState(() => stanje = v)),
                   Row(
                     children: [
-                      Expanded(child: _buildIOSDropdown("Godina", godina, godine, (v) => setState(() => godina = v))),
+                      Expanded(child: _iosPoljeZaBiranje("Godina", godina, godine, (v) => setState(() => godina = v))),
                       const SizedBox(width: 10),
-                      Expanded(child: _buildIOSDropdown("Prečnik", precnik, precnici, (v) => setState(() => precnik = v))),
+                      Expanded(child: _iosPoljeZaBiranje("Prečnik", precnik, precnici, (v) => setState(() => precnik = v))),
                     ],
                   ),
-                  _buildIOSDropdown("Materijal", materijal, materijali, (v) => setState(() => materijal = v)),
-                  _buildIOSDropdown("Staklo", staklo, stakla, (v) => setState(() => staklo = v)),
-                  _buildIOSDropdown("Mehanizam", mehanizam, mehanizmi, (v) => setState(() => mehanizam = v)),
-                  _buildIOSDropdown("Vodootpornost", vodootpornost, vodootpornosti, (v) => setState(() => vodootpornost = v)),
-                  _buildIOSDropdown("Kutija i Papiri", kutijaPapiri, opcijeKutija, (v) => setState(() => kutijaPapiri = v)),
+                  _iosPoljeZaBiranje("Materijal", materijal, materijali, (v) => setState(() => materijal = v)),
+                  _iosPoljeZaBiranje("Staklo", staklo, stakla, (v) => setState(() => staklo = v)),
+                  _iosPoljeZaBiranje("Mehanizam", mehanizam, mehanizmi, (v) => setState(() => mehanizam = v)),
+                  _iosPoljeZaBiranje("Vodootpornost", vodootpornost, vodootpornosti, (v) => setState(() => vodootpornost = v)),
+                  _iosPoljeZaBiranje("Kutija i Papiri", kutijaPapiri, opcijeKutija, (v) => setState(() => kutijaPapiri = v)),
                 ],
               ),
             ),
             const SizedBox(height: 20),
             
-            // OPIS
-            TextFormField(
+            CupertinoTextField(
               controller: opisController,
               maxLines: 4,
-              decoration: InputDecoration(labelText: "Opis", filled: true, fillColor: Colors.white, border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none)),
+              placeholder: "Opis",
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey.shade300)),
             ),
             const SizedBox(height: 30),
             
             SizedBox(
               width: double.infinity,
               height: 50,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.blue, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+              child: CupertinoButton(
+                color: Colors.blue,
+                borderRadius: BorderRadius.circular(10),
                 onPressed: _postaviOglas,
-                child: const Text("Objavi Oglas", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                child: const Text("Objavi Oglas", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
               ),
             ),
             const SizedBox(height: 40),
