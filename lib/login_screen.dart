@@ -10,145 +10,154 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  bool _isLoading = false;
+  bool isLogin = true; // Da li smo na ekranu za Prijavu ili Registraciju
+  bool isFirma = false; // Checkbox za pravna lica
 
-  Future<void> _ulogujSe() async {
-    setState(() => _isLoading = true);
-    try {
-      await Supabase.instance.client.auth.signInWithPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
-      );
-    } catch (e) {
-      try {
-        await Supabase.instance.client.auth.signUp(
-          email: _emailController.text.trim(),
-          password: _passwordController.text.trim(),
-        );
-      } catch (signUpError) {
-         if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Greška: $signUpError')));
-      }
+  final emailController = TextEditingController();
+  final passwordController = TextEditingController();
+  final phoneController = TextEditingController();
+
+  Future<void> _autentifikacija() async {
+    final email = emailController.text.trim();
+    final password = passwordController.text.trim();
+    final telefon = phoneController.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Unesite email i lozinku.")));
+      return;
     }
-    if (mounted) setState(() => _isLoading = false);
+
+    try {
+      if (isLogin) {
+        // PRIJAVA
+        await Supabase.instance.client.auth.signInWithPassword(email: email, password: password);
+      } else {
+        // REGISTRACIJA
+        if (telefon.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Broj telefona je obavezan za registraciju!")));
+          return;
+        }
+        // Šaljemo i dodatne podatke (telefon i status firme)
+        await Supabase.instance.client.auth.signUp(
+          email: email,
+          password: password,
+          data: {
+            'telefon': telefon,
+            'pravno_lice': isFirma,
+          }
+        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Uspešna registracija!")));
+        }
+      }
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Greška: $e")));
+    }
+  }
+
+  void _ulogujKaoGosta() {
+    // Propuštamo korisnika bez naloga direktno u aplikaciju!
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (context) => const MainLayout()),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    // STREAM BUILDER - Ovo rešava problem izbacivanja na Refresh!
-    return StreamBuilder<AuthState>(
-      stream: Supabase.instance.client.auth.onAuthStateChange,
-      builder: (context, snapshot) {
-        final session = Supabase.instance.client.auth.currentSession;
-
-       if (session != null) {
-          // KADA SI ULOGOVAN: Otvara se glavni meni sa 3 taba!
-          return const MainLayout();
-        }
-
-        // --- EKRAN ZA LOGIN ---
-        return _buildLoginScreen();
-      },
-    );
-  }
-
-  Widget _buildProfileScreen(String email) {
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 500),
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Icon(Icons.person_outline, size: 80, color: Colors.black87),
-              const SizedBox(height: 16),
-              const Text("Tvoj Profil", textAlign: TextAlign.center, style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800, letterSpacing: -0.5)),
-              const SizedBox(height: 8),
-              Text(email, textAlign: TextAlign.center, style: const TextStyle(fontSize: 16, color: Colors.black54)),
-              const SizedBox(height: 40),
-              
-              // OVO JE DUGME ZA DODAVANJE OGLASA
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
-                  padding: const EdgeInsets.symmetric(vertical: 20),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  elevation: 0,
+    return Scaffold(
+      backgroundColor: const Color(0xFFF3F4F6), // Premium siva
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // PREMIUM LOGO
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.black,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [BoxShadow(color: Colors.orange.withOpacity(0.3), blurRadius: 20, offset: const Offset(0, 10))],
+                  ),
+                  child: const Icon(Icons.watch, size: 60, color: Colors.orange),
                 ),
-                onPressed: () {
-                  // Za sada izbacuje obaveštenje, u sledećem koraku ovde otvaramo formu
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Uskoro otvaramo formu za novi oglas!')));
-                },
-                child: const Text("+ DODAJ NOVI OGLAS", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 1)),
-              ),
-              const SizedBox(height: 20),
-              TextButton(
-                onPressed: () => Supabase.instance.client.auth.signOut(),
-                child: const Text("Odjavi se", style: TextStyle(color: Colors.red, fontSize: 16, fontWeight: FontWeight.bold)),
-              )
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+                const SizedBox(height: 16),
+                const Text("NadjiSat", style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
+                const SizedBox(height: 8),
+                Text(isLogin ? "Prijavite se na svoj nalog" : "Kreirajte novi nalog", style: const TextStyle(color: Colors.grey, fontSize: 16)),
+                const SizedBox(height: 40),
 
-  Widget _buildLoginScreen() {
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 400),
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text("NadjiSat", textAlign: TextAlign.center, style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, letterSpacing: -1)),
-              const SizedBox(height: 8),
-              const Text("Prijavi se ili napravi nalog", textAlign: TextAlign.center, style: TextStyle(fontSize: 16, color: Colors.black54)),
-              const SizedBox(height: 40),
-              
-              // Čista input polja bez onih ružnih Android ivica
-              TextField(
-                controller: _emailController,
-                decoration: InputDecoration(
-                  hintText: 'Email adresa',
-                  filled: true,
-                  fillColor: Colors.grey[200],
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _passwordController,
-                obscureText: true,
-                decoration: InputDecoration(
-                  hintText: 'Šifra (min 6 karaktera)',
-                  filled: true,
-                  fillColor: Colors.grey[200],
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-                ),
-              ),
-              const SizedBox(height: 30),
-              
-              _isLoading
-                  ? const Center(child: CircularProgressIndicator(color: Colors.black))
-                  : ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.black,
-                        padding: const EdgeInsets.symmetric(vertical: 20),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        elevation: 0,
+                // FORMA ZA UNOS
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(25), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 15)]),
+                  child: Column(
+                    children: [
+                      TextField(
+                        controller: emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        decoration: InputDecoration(labelText: "Email", prefixIcon: const Icon(Icons.email_outlined), border: OutlineInputBorder(borderRadius: BorderRadius.circular(15))),
                       ),
-                      onPressed: _ulogujSe,
-                      child: const Text("Prijavi se", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-                    ),
-            ],
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: passwordController,
+                        obscureText: true,
+                        decoration: InputDecoration(labelText: "Lozinka", prefixIcon: const Icon(Icons.lock_outline), border: OutlineInputBorder(borderRadius: BorderRadius.circular(15))),
+                      ),
+                      
+                      // DODATNA POLJA SAMO ZA REGISTRACIJU
+                      if (!isLogin) ...[
+                        const SizedBox(height: 16),
+                        TextField(
+                          controller: phoneController,
+                          keyboardType: TextInputType.phone,
+                          decoration: InputDecoration(labelText: "Broj telefona (Obavezno)", prefixIcon: const Icon(Icons.phone_outlined), border: OutlineInputBorder(borderRadius: BorderRadius.circular(15))),
+                        ),
+                        const SizedBox(height: 10),
+                        CheckboxListTile(
+                          title: const Text("Pravno lice (Firma)", style: TextStyle(fontWeight: FontWeight.bold)),
+                          activeColor: Colors.orange[700],
+                          value: isFirma,
+                          onChanged: (val) => setState(() => isFirma = val ?? false),
+                          controlAffinity: ListTileControlAffinity.leading,
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                      ],
+
+                      const SizedBox(height: 24),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.black,
+                          minimumSize: const Size(double.infinity, 55),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                        ),
+                        onPressed: _autentifikacija,
+                        child: Text(isLogin ? "PRIJAVI SE" : "REGISTRUJ SE", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                      ),
+                    ],
+                  ),
+                ),
+                
+                const SizedBox(height: 20),
+                
+                // PREBACIVANJE LOGIN / REGISTRACIJA
+                TextButton(
+                  onPressed: () => setState(() { isLogin = !isLogin; }),
+                  child: Text(isLogin ? "Nemate nalog? Napravite ga ovde" : "Već imate nalog? Prijavite se", style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.bold)),
+                ),
+                
+                const SizedBox(height: 10),
+
+                // GUEST MODE (SAMO RAZGLEDAM)
+                TextButton.icon(
+                  onPressed: _ulogujKaoGosta,
+                  icon: const Icon(Icons.travel_explore, color: Colors.grey),
+                  label: const Text("Samo razgledam (Nastavi bez naloga)", style: TextStyle(color: Colors.grey, fontSize: 15, decoration: TextDecoration.underline)),
+                )
+              ],
+            ),
           ),
         ),
       ),
