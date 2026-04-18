@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'main_layout.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -41,9 +42,9 @@ class _LoginScreenState extends State<LoginScreen> {
       builder: (context, snapshot) {
         final session = Supabase.instance.client.auth.currentSession;
 
-        if (session != null) {
-          // --- EKRAN KADA SI ULOGOVAN (TVOJ PROFIL) ---
-          return _buildProfileScreen(session.user.email ?? '');
+       if (session != null) {
+          // KADA SI ULOGOVAN: Otvara se glavni meni sa 3 taba!
+          return const MainLayout();
         }
 
         // --- EKRAN ZA LOGIN ---
