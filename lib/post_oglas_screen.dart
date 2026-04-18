@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart'; // iOS stil
+import 'package:flutter/cupertino.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -12,15 +12,17 @@ class PostOglasScreen extends StatefulWidget {
 class _PostOglasScreenState extends State<PostOglasScreen> {
   final _formKey = GlobalKey<FormState>();
   
-  String? izabranBrend, izabranModel, stanje, godina, precnik, materijal, staklo;
+  // Sve promenljive
+  String? izabranBrend, izabranModel, stanje, godina, precnik, materijal, staklo, mehanizam, vodootpornost, kutijaPapiri;
   final cenaController = TextEditingController();
   final opisController = TextEditingController();
-  bool cenaPoDogovoru = false; // Novo: Cena po dogovoru
+  bool cenaPoDogovoru = false;
   
   List<XFile> izabraneSlike = [];
   final ImagePicker _picker = ImagePicker();
   bool isUploading = false;
 
+  // Liste
   final Map<String, List<String>> brendoviIModeli = {
     'Rolex': ['Submariner', 'Daytona', 'Datejust', 'GMT-Master II', 'Oyster Perpetual'],
     'Omega': ['Speedmaster', 'Seamaster', 'Aqua Terra'],
@@ -31,8 +33,11 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
   final List<String> stanja = ['Novo (Nenošeno)', 'Odlično', 'Vrlo dobro', 'Dobro', 'Za delove'];
   final List<String> materijali = ['Čelik', 'Zlato', 'Titanijum', 'Keramika', 'Platina', 'Karbon'];
   final List<String> stakla = ['Safirno', 'Mineralno', 'Akrilno (Plexi)'];
+  final List<String> mehanizmi = ['Automatik', 'Kvarcni', 'Ručno navijanje', 'Spring Drive'];
+  final List<String> vodootpornosti = ['Nije vodootporan', '30m (3 ATM)', '50m (5 ATM)', '100m (10 ATM)', '200m+ (Diver)'];
+  final List<String> opcijeKutija = ['Full Set (Kutija i papiri)', 'Samo kutija', 'Samo papiri', 'Samo sat'];
   final List<String> godine = List.generate(75, (index) => (2024 - index).toString());
-  final List<String> precnici = List.generate(28, (index) => "${28 + index} mm");
+  final List<String> precnici = List.generate(33, (index) => "${28 + index} mm");
 
   Future<void> _izaberiSlike() async {
     final List<XFile> slike = await _picker.pickMultiImage();
@@ -66,30 +71,36 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
       for (var slika in izabraneSlike) {
         final bytes = await slika.readAsBytes();
         final imeFajla = '${DateTime.now().millisecondsSinceEpoch}_${slika.name}';
-        await Supabase.instance.client.storage.from('slike_oglasi').uploadBinary(imeFajla, bytes);
-        final url = Supabase.instance.client.storage.from('slike_oglasi').getPublicUrl(imeFajla);
+        
+        // PAZI OVDE: Promenjeno u 'slike-oglasi' (tvoj naziv)
+        await Supabase.instance.client.storage.from('slike-oglasi').uploadBinary(imeFajla, bytes);
+        final url = Supabase.instance.client.storage.from('slike-oglasi').getPublicUrl(imeFajla);
         slikeUrls.add(url);
       }
 
       await Supabase.instance.client.from('satovi').insert({
-        'user_id': user?.id, // <--- OVO REŠAVA TVOJU CRVENU GREŠKU!
+        'user_id': user?.id, 
         'user_email': user?.email,
         'brend': izabranBrend,
         'model': izabranModel,
-        'cena': cenaPoDogovoru ? null : (int.tryParse(cenaController.text.trim()) ?? 0), // Null ako je po dogovoru
-        'cena_dogovor': cenaPoDogovoru, // Nova kolona koju moramo dodati u bazu (vidi dole)
+        'cena': cenaPoDogovoru ? null : (int.tryParse(cenaController.text.trim()) ?? 0), 
+        'cena_dogovor': cenaPoDogovoru,
         'godina': godina,
         'precnik': precnik,
         'stanje': stanje,
         'materijal': materijal,
         'staklo': staklo,
+        // Ove tri kolone moraš dodati u bazu (vidi dole)
+        'mehanizam': mehanizam,
+        'vodootpornost': vodootpornost,
+        'kutija_papiri': kutijaPapiri,
         'opis': opisController.text.trim(),
         'slike': slikeUrls.join(','),
       });
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Oglas postavljen!")));
-        Navigator.pop(context); // Vraća na početnu
+        Navigator.pop(context); 
       }
     } catch (e) {
       setState(() => isUploading = false);
@@ -118,7 +129,7 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F2F7), // iOS siva pozadina
+      backgroundColor: const Color(0xFFF2F2F7), 
       appBar: AppBar(
         title: const Text("Novi oglas", style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600)),
         backgroundColor: Colors.white,
@@ -129,6 +140,7 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            // SLIKE
             GestureDetector(
               onTap: _izaberiSlike,
               child: Container(
@@ -154,6 +166,7 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
               ),
             const SizedBox(height: 20),
             
+            // OSNOVNO
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
@@ -162,7 +175,6 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
                   _buildIOSDropdown("Brend", izabranBrend, brendoviIModeli.keys.toList(), (v) => setState(() { izabranBrend = v; izabranModel = null; })),
                   if (izabranBrend != null) _buildIOSDropdown("Model", izabranModel, brendoviIModeli[izabranBrend]!, (v) => setState(() => izabranModel = v)),
                   
-                  // CENA ILI DOGOVOR (iOS stil)
                   Row(
                     children: [
                       const Text("Kontakt / Po dogovoru", style: TextStyle(fontSize: 16)),
@@ -189,6 +201,7 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
             ),
             const SizedBox(height: 20),
             
+            // SPECIFIKACIJE
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
@@ -204,11 +217,15 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
                   ),
                   _buildIOSDropdown("Materijal", materijal, materijali, (v) => setState(() => materijal = v)),
                   _buildIOSDropdown("Staklo", staklo, stakla, (v) => setState(() => staklo = v)),
+                  _buildIOSDropdown("Mehanizam", mehanizam, mehanizmi, (v) => setState(() => mehanizam = v)),
+                  _buildIOSDropdown("Vodootpornost", vodootpornost, vodootpornosti, (v) => setState(() => vodootpornost = v)),
+                  _buildIOSDropdown("Kutija i Papiri", kutijaPapiri, opcijeKutija, (v) => setState(() => kutijaPapiri = v)),
                 ],
               ),
             ),
             const SizedBox(height: 20),
             
+            // OPIS
             TextFormField(
               controller: opisController,
               maxLines: 4,
