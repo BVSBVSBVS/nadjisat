@@ -26,7 +26,7 @@ class _HomeScreenState extends State<HomeScreen> {
         return StatefulBuilder(
           builder: (context, setModalState) {
             return Container(
-              height: MediaQuery.of(context).size.height * 0.7,
+              height: MediaQuery.of(context).size.height * 0.75,
               decoration: const BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
@@ -39,7 +39,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: Container(width: 40, height: 5, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(10))),
                   ),
                   const SizedBox(height: 20),
-                  const Text("Filteri", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                  const Text("Napredni Filteri", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 20),
                   
                   // BREND
@@ -57,14 +57,14 @@ class _HomeScreenState extends State<HomeScreen> {
                       setModalState(() => filterBrend = v == 'Svi' ? null : v);
                     },
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 25),
 
                   // CENA
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text("Cena (€)", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
-                      Text("${filterCena.start.toInt()} € - ${filterCena.end.toInt()} €", style: const TextStyle(fontWeight: FontWeight.bold)),
+                      Text("${filterCena.start.toInt()} € - ${filterCena.end.toInt()} €", style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
                     ],
                   ),
                   RangeSlider(
@@ -76,14 +76,14 @@ class _HomeScreenState extends State<HomeScreen> {
                     inactiveColor: Colors.grey[300],
                     onChanged: (v) => setModalState(() => filterCena = v),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 25),
 
                   // GODINA
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text("Godina", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
-                      Text("${filterGodina.start.toInt()} - ${filterGodina.end.toInt()}", style: const TextStyle(fontWeight: FontWeight.bold)),
+                      Text("${filterGodina.start.toInt()} - ${filterGodina.end.toInt()}", style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
                     ],
                   ),
                   RangeSlider(
@@ -100,14 +100,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.black,
-                      minimumSize: const Size(double.infinity, 55),
+                      minimumSize: const Size(double.infinity, 60),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                     ),
                     onPressed: () {
-                      setState(() {}); // Osvežava glavni ekran sa novim filterima
-                      Navigator.pop(context);
+                      setState(() {}); // Primeni u pozadini
+                      Navigator.pop(context); // Zatvori prozor
                     },
-                    child: const Text("PRIMENI FILTERE", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                    child: const Text("PRIKAŽI REZULTATE", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
                   )
                 ],
               ),
@@ -121,118 +121,128 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: const Color(0xFFF3F4F6),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: TextField(
-          decoration: InputDecoration(
-            hintText: 'Pretraži modele (npr. Submariner)',
-            hintStyle: TextStyle(color: Colors.grey[400]),
-            prefixIcon: const Icon(Icons.search, color: Colors.black),
-            filled: true,
-            fillColor: Colors.grey[100],
-            contentPadding: const EdgeInsets.symmetric(vertical: 0),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide.none),
-          ),
-          onChanged: (v) => setState(() => pretragaText = v.toLowerCase()),
-        ),
-        actions: [
-          IconButton(
-            onPressed: _otvoriFiltere,
-            icon: const Icon(Icons.tune, color: Colors.black),
-          )
-        ],
+        title: const Text("Pretraga Satova", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+        centerTitle: false,
       ),
-      body: StreamBuilder<List<Map<String, dynamic>>>(
-        stream: Supabase.instance.client.from('satovi').stream(primaryKey: ['id']).order('created_at', ascending: false),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator(color: Colors.black));
-          if (!snapshot.hasData || snapshot.data!.isEmpty) return const Center(child: Text("Nema oglasa."));
-
-          // Primenjujemo logiku filtera na podatke iz baze
-          final satovi = snapshot.data!.where((sat) {
-            // Text pretraga (Model)
-            final modelSata = (sat['model'] ?? '').toString().toLowerCase();
-            if (pretragaText.isNotEmpty && !modelSata.contains(pretragaText)) return false;
-            
-            // Filter Brend
-            if (filterBrend != null && sat['brend'] != filterBrend) return false;
-
-            // Filter Cena
-            final cena = sat['cena'] is int ? sat['cena'] : int.tryParse(sat['cena'].toString()) ?? 0;
-            if (cena < filterCena.start || cena > filterCena.end) return false;
-
-            // Filter Godina
-            final godinaSata = int.tryParse((sat['godina'] ?? '').toString()) ?? 0;
-            if (godinaSata != 0 && (godinaSata < filterGodina.start || godinaSata > filterGodina.end)) return false;
-
-            return true;
-          }).toList();
-
-          if (satovi.isEmpty) return const Center(child: Text("Nijedan sat ne odgovara filterima.", style: TextStyle(color: Colors.grey)));
-
-          return GridView.builder(
-            padding: const EdgeInsets.all(16),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2, crossAxisSpacing: 16, mainAxisSpacing: 16, childAspectRatio: 0.72
-            ),
-            itemCount: satovi.length,
-            itemBuilder: (context, index) {
-              final sat = satovi[index];
-              return Container(
-                decoration: BoxDecoration(
-                  color: Colors.white, 
-                  borderRadius: BorderRadius.circular(15),
-                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))]
+      body: Column(
+        children: [
+          // GLAVNI DEO ZA PRETRAGU I FILTERE (Moderni blok)
+          Container(
+            color: Colors.white,
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: Column(
+              children: [
+                TextField(
+                  decoration: InputDecoration(
+                    hintText: 'Upiši model (npr. Daytona)',
+                    hintStyle: TextStyle(color: Colors.grey[500]),
+                    prefixIcon: const Icon(Icons.search, color: Colors.black),
+                    filled: true,
+                    fillColor: Colors.grey[100],
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
+                  ),
+                  onChanged: (v) => setState(() => pretragaText = v.toLowerCase()),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Container(
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFEEEEEE),
-                          borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
-                          // Ovde ćemo kasnije ubaciti pravu sliku, za sad ikonica
-                        ),
-                        child: const Center(child: Icon(Icons.watch, size: 50, color: Colors.grey)),
-                      ),
+                const SizedBox(height: 12),
+                // OVO JE NOVO DUGME ZA FILTERE
+                InkWell(
+                  onTap: _otvoriFiltere,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.black,
+                      borderRadius: BorderRadius.circular(15),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.all(12.0),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.tune, color: Colors.white, size: 20),
+                        SizedBox(width: 8),
+                        Text("Napredni Filteri (Cena, Godina, Brend)", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          // Ostatak ekrana: Mreža oglasa
+          Expanded(
+            child: StreamBuilder<List<Map<String, dynamic>>>(
+              stream: Supabase.instance.client.from('satovi').stream(primaryKey: ['id']).order('created_at', ascending: false),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator(color: Colors.black));
+                if (!snapshot.hasData || snapshot.data!.isEmpty) return const Center(child: Text("Nema oglasa u bazi.", style: TextStyle(color: Colors.grey)));
+
+                final satovi = snapshot.data!.where((sat) {
+                  final modelSata = (sat['model'] ?? '').toString().toLowerCase();
+                  if (pretragaText.isNotEmpty && !modelSata.contains(pretragaText)) return false;
+                  
+                  if (filterBrend != null && sat['brend'] != filterBrend) return false;
+
+                  final cena = sat['cena'] is int ? sat['cena'] : int.tryParse(sat['cena'].toString()) ?? 0;
+                  if (cena < filterCena.start || cena > filterCena.end) return false;
+
+                  final godinaSata = int.tryParse((sat['godina'] ?? '').toString()) ?? 0;
+                  if (godinaSata != 0 && (godinaSata < filterGodina.start || godinaSata > filterGodina.end)) return false;
+
+                  return true;
+                }).toList();
+
+                if (satovi.isEmpty) return const Center(child: Text("Nijedan sat ne odgovara filterima.", style: TextStyle(color: Colors.grey)));
+
+                return GridView.builder(
+                  padding: const EdgeInsets.all(16),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2, crossAxisSpacing: 16, mainAxisSpacing: 16, childAspectRatio: 0.72
+                  ),
+                  itemCount: satovi.length,
+                  itemBuilder: (context, index) {
+                    final sat = satovi[index];
+                    return Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white, 
+                        borderRadius: BorderRadius.circular(15),
+                        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))]
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text("${sat['cena']} €", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black)),
-                          const SizedBox(height: 4),
-                          Text("${sat['brend']}", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black87)),
-                          Text("${sat['model']}", style: const TextStyle(fontSize: 12, color: Colors.grey), maxLines: 1, overflow: TextOverflow.ellipsis),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(5)),
-                                child: Text("${sat['godina'] ?? ''}", style: const TextStyle(fontSize: 10, color: Colors.grey)),
+                          Expanded(
+                            child: Container(
+                              decoration: const BoxDecoration(
+                                color: Color(0xFFEEEEEE),
+                                borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
                               ),
-                              const SizedBox(width: 4),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(5)),
-                                child: Text("${sat['precnik'] ?? ''}", style: const TextStyle(fontSize: 10, color: Colors.grey)),
-                              ),
-                            ],
+                              child: const Center(child: Icon(Icons.watch, size: 50, color: Colors.grey)),
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text("${sat['cena']} €", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black)),
+                                const SizedBox(height: 4),
+                                Text("${sat['brend']}", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black87)),
+                                Text("${sat['model']}", style: const TextStyle(fontSize: 12, color: Colors.grey), maxLines: 1, overflow: TextOverflow.ellipsis),
+                              ],
+                            ),
                           )
                         ],
                       ),
-                    )
-                  ],
-                ),
-              );
-            },
-          );
-        },
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
