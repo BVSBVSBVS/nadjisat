@@ -1,46 +1,39 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'home_screen.dart';
+import 'post_oglas_screen.dart';
 
 class MainLayout extends StatefulWidget {
   const MainLayout({super.key});
-
   @override
   State<MainLayout> createState() => _MainLayoutState();
 }
 
 class _MainLayoutState extends State<MainLayout> {
-  int _trenutniIndex = 0;
-
-  // Ovde ćemo kasnije ubacivati prave ekrane koje budemo pravili
-  final List<Widget> _ekrani = [
-    const Center(child: Text("Ovdje ide: SVI OGLASI (50 NAJNOVIJIH)")),
-    const Center(child: Text("Ovdje ide: MOJI OGLASI I DODAVANJE")),
-    const Center(child: Text("Ovdje ide: PROFIL KORISNIKA")),
+  int _currentIndex = 0;
+  final List<Widget> _pages = [
+    const HomeScreen(),
+    const PostOglasScreen(),
+    const Center(child: Text("Oglasi koje pratim")),
+    const Center(child: Text("Moji oglasi / Profil")),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("NadjiSat", style: TextStyle(fontWeight: FontWeight.bold)),
-        centerTitle: true,
-        backgroundColor: Colors.black,
-        foregroundColor: Colors.white,
-      ),
-      body: _ekrani[_trenutniIndex],
+      body: _pages[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _trenutniIndex,
+        currentIndex: _currentIndex,
+        type: BottomNavigationBarType.fixed,
         selectedItemColor: Colors.black,
         unselectedItemColor: Colors.grey,
-        onTap: (index) {
-          setState(() {
-            _trenutniIndex = index;
-          });
-        },
+        selectedFontSize: 12,
+        unselectedFontSize: 12,
+        onTap: (index) => setState(() => _currentIndex = index),
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Početna'),
-          BottomNavigationBarItem(icon: Icon(Icons.watch), label: 'Moji Oglasi'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profil'),
+          BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Pretraga'),
+          BottomNavigationBarItem(icon: Icon(Icons.add_box_outlined), label: 'Postavi oglas'),
+          BottomNavigationBarItem(icon: Icon(Icons.favorite_border), label: 'Pratim'),
+          BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Moji oglasi'),
         ],
       ),
     );

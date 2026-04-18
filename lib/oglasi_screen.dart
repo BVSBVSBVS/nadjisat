@@ -99,7 +99,7 @@ class _OglasiScreenState extends State<OglasiScreen> {
                         }
                         
                         try {
-                          await Supabase.instance.client.from('oglasi').insert({
+                          await Supabase.instance.client.from('satovi').insert({
                             'user_email': user?.email,
                             'brend': izabranBrend,
                             'model': modelController.text.trim(),
