@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'home_screen.dart';
 import 'post_oglas_screen.dart';
+import 'profil_screen.dart'; // <--- OVO MORA DA STOJI NA VRHU
 
 class MainLayout extends StatefulWidget {
   const MainLayout({super.key});
@@ -10,11 +11,13 @@ class MainLayout extends StatefulWidget {
 
 class _MainLayoutState extends State<MainLayout> {
   int _currentIndex = 0;
+  
+  // OVDE SMO ZAMENILI ONAJ GLUPI TEKST SA PRAVIM PROFILOM
   final List<Widget> _pages = [
     const HomeScreen(),
     const PostOglasScreen(),
     const Center(child: Text("Oglasi koje pratim")),
-    const Center(child: Text("Moji oglasi / Profil")),
+    const ProfilScreen(), // <--- PRAVI PROFIL EKRAN
   ];
 
   @override
