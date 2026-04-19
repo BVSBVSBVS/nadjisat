@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter/cupertino.dart';
+// Uvezi tvoje ekrane (proveri da li se fajlovi ovako zovu kod tebe)
+import 'home_screen.dart';
+import 'post_oglas_screen.dart';
+import 'profile_screen.dart'; // Ako imaš poseban ekran za profil
+// import 'pratim_screen.dart'; // Ako imaš ekran za praćene oglase (ako ne, stavićemo prazan kontejner za sad)
 
 class MainLayout extends StatefulWidget {
   const MainLayout({super.key});
@@ -11,36 +16,47 @@ class MainLayout extends StatefulWidget {
 class _MainLayoutState extends State<MainLayout> {
   int _trenutniIndex = 0;
 
-  // Ovde ćemo kasnije ubacivati prave ekrane koje budemo pravili
+  // Lista ekrana (MORA DA IH IMA 4 DA BI SE GAĐALO SA IKONICAMA)
   final List<Widget> _ekrani = [
-    const Center(child: Text("Ovdje ide: SVI OGLASI (50 NAJNOVIJIH)")),
-    const Center(child: Text("Ovdje ide: MOJI OGLASI I DODAVANJE")),
-    const Center(child: Text("Ovdje ide: PROFIL KORISNIKA")),
+    const HomeScreen(),
+    const PostOglasScreen(),
+    Container(color: Colors.white, child: const Center(child: Text("Pratim - Uskoro"))), // Zameni sa tvojim ekranom ako ga imaš
+    const ProfileScreen(), // Ili kako god ti se zove ekran za profil/oglase
   ];
+
+  void _naTapkanje(int index) {
+    setState(() {
+      _trenutniIndex = index;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("NadjiSat", style: TextStyle(fontWeight: FontWeight.bold)),
-        centerTitle: true,
-        backgroundColor: Colors.black,
-        foregroundColor: Colors.white,
-      ),
       body: _ekrani[_trenutniIndex],
       bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed, // Važno da se vide sve 4 ikonice
         currentIndex: _trenutniIndex,
-        selectedItemColor: Colors.black,
+        onTap: _naTapkanje,
+        selectedItemColor: Colors.blue,
         unselectedItemColor: Colors.grey,
-        onTap: (index) {
-          setState(() {
-            _trenutniIndex = index;
-          });
-        },
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Početna'),
-          BottomNavigationBarItem(icon: Icon(Icons.watch), label: 'Moji Oglasi'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profil'),
+          BottomNavigationBarItem(
+            icon: Icon(CupertinoIcons.search),
+            label: 'Pretraga',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(CupertinoIcons.add_circled),
+            label: 'Postavi oglas',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(CupertinoIcons.heart),
+            label: 'Pratim',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(CupertinoIcons.person),
+            label: 'Moj Profil',
+          ),
         ],
       ),
     );
