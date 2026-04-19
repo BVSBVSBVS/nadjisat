@@ -137,7 +137,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: const Color.fromARGB(255, 59, 214, 154),
       appBar: AppBar(
         backgroundColor: const Color(0xFF89CFF0), // Baby Blue
         title: const Text("NadjiSat", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 26)),
