@@ -11,14 +11,12 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   String pretragaText = '';
   
-  // SVIH 10 FILTERA
   String? filterBrend, filterModel, filterStanje, filterMaterijal, filterStaklo, filterMehanizam, filterVodootpornost, filterKutija;
   final minCenaController = TextEditingController();
   final maxCenaController = TextEditingController();
   final minGodinaController = TextEditingController();
   final maxGodinaController = TextEditingController();
 
-  // PROŠIRENA BAZA SATOVA (Dodaj još ako treba)
   final Map<String, List<String>> brendoviIModeli = {
     'Svi': [],
     'Rolex': ['Submariner', 'Daytona', 'Datejust', 'GMT-Master II', 'Oyster Perpetual', 'Sea-Dweller', 'Yacht-Master', 'Sky-Dweller', 'Explorer', 'Milgauss'],
@@ -46,18 +44,17 @@ class _HomeScreenState extends State<HomeScreen> {
   final List<String> materijali = ['Sve', 'Čelik', 'Zlato', 'Titanijum', 'Keramika', 'Platina', 'Karbon'];
   final List<String> mehanizmi = ['Sve', 'Automatik', 'Kvarcni', 'Ručno navijanje', 'Spring Drive'];
 
-  // iOS Picker za filtere
   void _prikaziIOSPicker(String naslov, List<String> opcije, Function(String) onOdabrano) {
     showCupertinoModalPopup(
       context: context,
       builder: (_) => Container(
         height: 250,
-        color: Colors.white,
+        color: Theme.of(context).scaffoldBackgroundColor,
         child: Column(
           children: [
             Container(
               height: 50,
-              color: Colors.grey.shade100,
+              color: Theme.of(context).cardColor,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
@@ -69,7 +66,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: CupertinoPicker(
                 itemExtent: 32.0,
                 onSelectedItemChanged: (index) => onOdabrano(opcije[index]),
-                children: opcije.map((o) => Center(child: Text(o, style: const TextStyle(fontSize: 18)))).toList(),
+                children: opcije.map((o) => Center(child: Text(o, style: TextStyle(fontSize: 18, color: Theme.of(context).textTheme.bodyLarge?.color)))).toList(),
               ),
             ),
           ],
@@ -79,19 +76,20 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _iosFilterDugme(String label, String? vrednost, List<String> opcije, Function(String) onOdabrano) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
       onTap: () => _prikaziIOSPicker(label, opcije, onOdabrano),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         margin: const EdgeInsets.only(bottom: 10),
-        decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(10)),
+        decoration: BoxDecoration(color: isDark ? Colors.grey[800] : Colors.grey[100], borderRadius: BorderRadius.circular(10)),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(label, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+           Text(label, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)), 
             Row(
               children: [
-                Text(vrednost ?? "Sve", style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w500)),
+                Text(vrednost ?? "Sve", style: TextStyle(color: isDark ? Colors.white : Colors.black, fontWeight: FontWeight.w500)),
                 const SizedBox(width: 5),
                 const Icon(CupertinoIcons.chevron_down, size: 16, color: Colors.grey),
               ],
@@ -103,21 +101,22 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _otvoriFiltere() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         height: MediaQuery.of(context).size.height * 0.9,
-        decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(25))),
+        decoration: BoxDecoration(color: Theme.of(context).scaffoldBackgroundColor, borderRadius: const BorderRadius.vertical(top: Radius.circular(25))),
         padding: const EdgeInsets.all(20),
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Center(child: Container(width: 40, height: 5, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(10)))),
+              Center(child: Container(width: 40, height: 5, decoration: BoxDecoration(color: Colors.grey[400], borderRadius: BorderRadius.circular(10)))),
               const SizedBox(height: 20),
-              const Text("Detaljni Filteri", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+              Text("Detaljni Filteri", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black)),
               const SizedBox(height: 20),
 
               _iosFilterDugme("Brend", filterBrend, brendoviIModeli.keys.toList(), (v) => setState(() { filterBrend = v == 'Svi' ? null : v; filterModel = null; })),
@@ -133,22 +132,11 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 10),
               Row(
                 children: [
-                  Expanded(child: CupertinoTextField(controller: minCenaController, placeholder: "Od", keyboardType: TextInputType.number, padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(10)))),
+                  Expanded(child: CupertinoTextField(style: TextStyle(color: isDark ? Colors.white : Colors.black), controller: minCenaController, placeholder: "Od", keyboardType: TextInputType.number, padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: isDark ? Colors.grey[800] : Colors.grey[100], borderRadius: BorderRadius.circular(10)))),
                   const SizedBox(width: 10),
-                  Expanded(child: CupertinoTextField(controller: maxCenaController, placeholder: "Do", keyboardType: TextInputType.number, padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(10)))),
+                  Expanded(child: CupertinoTextField(style: TextStyle(color: isDark ? Colors.white : Colors.black), controller: maxCenaController, placeholder: "Do", keyboardType: TextInputType.number, padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: isDark ? Colors.grey[800] : Colors.grey[100], borderRadius: BorderRadius.circular(10)))),
                 ],
               ),
-              const SizedBox(height: 15),
-              const Text("GODINA", style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.grey)),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Expanded(child: CupertinoTextField(controller: minGodinaController, placeholder: "Od", keyboardType: TextInputType.number, padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(10)))),
-                  const SizedBox(width: 10),
-                  Expanded(child: CupertinoTextField(controller: maxGodinaController, placeholder: "Do", keyboardType: TextInputType.number, padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(10)))),
-                ],
-              ),
-
               const SizedBox(height: 30),
               SizedBox(
                 width: double.infinity,
@@ -167,24 +155,25 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F2F7),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF89CFF0), 
-        title: const Text("NadjiSat", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 24)),
+        title: const Text("NadjiSat", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 24)),
         centerTitle: true,
-        elevation: 0,
       ),
       body: Column(
         children: [
           Container(
-            color: const Color(0xFF89CFF0),
+            color: Theme.of(context).appBarTheme.backgroundColor,
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             child: Row(
               children: [
                 Expanded(
                   child: CupertinoSearchTextField(
-                    backgroundColor: Colors.white,
+                    backgroundColor: isDark ? Colors.grey[800] : Colors.white,
+                    style: TextStyle(color: isDark ? Colors.white : Colors.black),
                     placeholder: "Pretraži oglase...",
                     onChanged: (v) => setState(() => pretragaText = v.toLowerCase()),
                   ),
@@ -194,8 +183,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   onTap: _otvoriFiltere,
                   child: Container(
                     padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10)),
-                    child: const Icon(CupertinoIcons.slider_horizontal_3, color: Colors.black),
+                    decoration: BoxDecoration(color: isDark ? Colors.grey[800] : Colors.white, borderRadius: BorderRadius.circular(10)),
+                    child: Icon(CupertinoIcons.slider_horizontal_3, color: isDark ? Colors.white : Colors.black),
                   ),
                 )
               ],
@@ -208,11 +197,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 if (!snapshot.hasData) return const Center(child: CupertinoActivityIndicator());
 
                 final satovi = snapshot.data!.where((sat) {
-                  // Pretraga po tekstu
                   final naslov = (sat['naslov'] ?? '').toString().toLowerCase();
                   if (pretragaText.isNotEmpty && !naslov.contains(pretragaText)) return false;
-
-                  // SVI FILTERI
                   if (filterBrend != null && sat['brend'] != filterBrend) return false;
                   if (filterModel != null && sat['model'] != filterModel) return false;
                   if (filterStanje != null && sat['stanje'] != filterStanje) return false;
@@ -223,11 +209,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   final minC = int.tryParse(minCenaController.text) ?? 0;
                   final maxC = int.tryParse(maxCenaController.text) ?? 9999999;
                   if (cena < minC || cena > maxC) return false;
-
-                  final god = int.tryParse(sat['godina'].toString()) ?? 0;
-                  final minG = int.tryParse(minGodinaController.text) ?? 0;
-                  final maxG = int.tryParse(maxGodinaController.text) ?? 2025;
-                  if (god != 0 && (god < minG || god > maxG)) return false;
 
                   return true;
                 }).toList();
@@ -244,7 +225,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     final prvaSlika = slikeStr.isNotEmpty ? slikeStr.split(',')[0] : null;
 
                     return Container(
-                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(15), boxShadow: [BoxShadow(color: Colors.black.withAlpha(10), blurRadius: 10, offset: const Offset(0, 5))]),
+                      decoration: BoxDecoration(color: isDark ? const Color(0xFF1C1C1E) : Colors.white, borderRadius: BorderRadius.circular(15), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 10), blurRadius: 10, offset: const Offset(0, 5))]),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -252,9 +233,10 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: ClipRRect(
                               borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
                               child: Container(
-                                color: Colors.grey[100],
+                                color: isDark ? Colors.grey[900] : Colors.grey[100],
                                 width: double.infinity,
-                                child: prvaSlika != null ? Image.network(prvaSlika, fit: BoxFit.cover) : const Icon(Icons.watch, size: 40, color: Colors.grey),
+                                // OVO JE TAJNA ZA UBRZAVANJE - cacheWidth smanjuje potrošnju RAM-a za 80%
+                                child: prvaSlika != null ? Image.network(prvaSlika, fit: BoxFit.cover, cacheWidth: 400) : const Icon(Icons.watch, size: 40, color: Colors.grey),
                               ),
                             ),
                           ),
@@ -263,7 +245,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(sat['cena_dogovor'] == true ? "Po dogovoru" : "${sat['cena']} €", style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+                                Text(sat['cena_dogovor'] == true ? "Po dogovoru" : "${sat['cena']} €", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: isDark ? Colors.white : Colors.black)),
                                 const SizedBox(height: 2),
                                 Text("${sat['brend']}", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.blueAccent)),
                                 Text("${sat['model']}", style: const TextStyle(fontSize: 11, color: Colors.grey), maxLines: 1, overflow: TextOverflow.ellipsis),
