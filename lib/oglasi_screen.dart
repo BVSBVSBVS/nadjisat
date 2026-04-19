@@ -51,7 +51,7 @@ class _OglasiScreenState extends State<OglasiScreen> {
                     // PADAJUĆI MENIJI ZA KATEGORIJE
                     DropdownButtonFormField<String>(
                       decoration: const InputDecoration(labelText: 'Brend', border: OutlineInputBorder()),
-                      value: izabranBrend,
+                      initialValue: izabranBrend,
                       items: brendovi.map((b) => DropdownMenuItem(value: b, child: Text(b))).toList(),
                       onChanged: (val) => setModalState(() => izabranBrend = val),
                     ),
@@ -65,7 +65,7 @@ class _OglasiScreenState extends State<OglasiScreen> {
                     
                     DropdownButtonFormField<String>(
                       decoration: const InputDecoration(labelText: 'Stanje', border: OutlineInputBorder()),
-                      value: izabranoStanje,
+                      initialValue: izabranoStanje,
                       items: stanja.map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
                       onChanged: (val) => setModalState(() => izabranoStanje = val),
                     ),
@@ -73,7 +73,7 @@ class _OglasiScreenState extends State<OglasiScreen> {
                     
                     DropdownButtonFormField<String>(
                       decoration: const InputDecoration(labelText: 'Materijal kućišta', border: OutlineInputBorder()),
-                      value: izabranMaterijal,
+                     initialValue: izabranMaterijal,
                       items: materijali.map((m) => DropdownMenuItem(value: m, child: Text(m))).toList(),
                       onChanged: (val) => setModalState(() => izabranMaterijal = val),
                     ),
@@ -81,7 +81,7 @@ class _OglasiScreenState extends State<OglasiScreen> {
 
                     DropdownButtonFormField<String>(
                       decoration: const InputDecoration(labelText: 'Staklo', border: OutlineInputBorder()),
-                      value: izabranoStaklo,
+                      initialValue: izabranoStaklo,
                       items: stakla.map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
                       onChanged: (val) => setModalState(() => izabranoStaklo = val),
                     ),

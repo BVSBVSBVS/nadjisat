@@ -79,7 +79,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   decoration: BoxDecoration(
                     color: Colors.black,
                     borderRadius: BorderRadius.circular(20),
-                    // Umesto withOpacity(0.3) stavi ovo:
+                    // Umesto withAlpha(0.3) stavi ovo:
 boxShadow: [BoxShadow(color: Colors.orange.withAlpha(76), blurRadius: 20, offset: const Offset(0, 10))],
                   ),
                   child: const Icon(Icons.watch, size: 60, color: Colors.orange),
@@ -93,7 +93,7 @@ boxShadow: [BoxShadow(color: Colors.orange.withAlpha(76), blurRadius: 20, offset
                 // FORMA ZA UNOS
                 Container(
                   padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(25), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 15)]),
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(25), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 15)]),
                   child: Column(
                     children: [
                       TextField(
