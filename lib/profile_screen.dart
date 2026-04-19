@@ -3,7 +3,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'edit_oglas_screen.dart';
 import 'main.dart'; // <-- DODALI SMO OVO DA VIDI GLOBALNI PREKIDAČ
-
+ import 'login_screen.dart'; 
+ 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
   @override
@@ -55,7 +56,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (user == null) return const Scaffold(body: Center(child: Text("Ulogujte se.")));
+    // NE ZABORAVI DA DODAS OVAJ IMPORT NA VRH FAJLA:
+// import 'login_screen.dart';
+
+    if (user == null) {
+      return Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(CupertinoIcons.lock_circle, size: 80, color: Colors.grey),
+              const SizedBox(height: 20),
+              const Text("Niste prijavljeni", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 20),
+              CupertinoButton.filled(
+                child: const Text("Prijavi se / Registruj se"),
+                onPressed: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => const LoginScreen()));
+                },
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     // OVAKO PROVERAVAMO DA LI JE TEMA TRENUTNO TAMNA ILI SVETLA U CELOJ APLIKACIJI
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
