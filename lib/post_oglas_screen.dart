@@ -45,7 +45,7 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
         izabraneSlike.addAll(slike);
         if (izabraneSlike.length > 16) {
           izabraneSlike = izabraneSlike.sublist(0, 16);
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Max 16 slika.")));
+          if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Max 16 slika.")));
         }
       });
     }
@@ -71,7 +71,6 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
         final bytes = await slika.readAsBytes();
         final imeFajla = '${DateTime.now().millisecondsSinceEpoch}_${slika.name}';
         
-        // Pokušava oba imena bucketa za svaki slučaj, da te ne bi blokirao onaj 404
         try {
           await Supabase.instance.client.storage.from('slike_oglasi').uploadBinary(imeFajla, bytes);
           slikeUrls.add(Supabase.instance.client.storage.from('slike_oglasi').getPublicUrl(imeFajla));
@@ -84,7 +83,7 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
       await Supabase.instance.client.from('satovi').insert({
         'user_id': user?.id, 
         'user_email': user?.email,
-        'naslov': '$izabranBrend $izabranModel', // <--- OVO REŠAVA TVOJU TRENUTNU GREŠKU!
+        'naslov': '$izabranBrend $izabranModel',
         'brend': izabranBrend,
         'model': izabranModel,
         'cena': cenaPoDogovoru ? null : (int.tryParse(cenaController.text.trim()) ?? 0), 
@@ -101,17 +100,17 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
         'slike': slikeUrls.join(','),
       });
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Oglas uspešno postavljen!")));
-        Navigator.pop(context); 
-      }
+      if (!mounted) return; // Fix za Async Gaps
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Oglas uspešno postavljen!")));
+      Navigator.pop(context); 
+      
     } catch (e) {
+      if (!mounted) return; // Fix za Async Gaps
       setState(() => isUploading = false);
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Greška: $e")));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Greška: $e")));
     }
   }
 
-  // OVO JE NOVI PRAVI IOS PICKER (ROLLER) ODOZDO
   void _prikaziIOSPicker(String naslov, List<String> opcije, Function(String) onOdabrano) {
     showCupertinoModalPopup(
       context: context,
@@ -216,7 +215,7 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
                       const Spacer(),
                       CupertinoSwitch(
                         value: cenaPoDogovoru,
-                        activeColor: Colors.blue,
+                        activeColor: CupertinoColors.activeBlue, // Fix za deprecated activeColor
                         onChanged: (v) => setState(() { cenaPoDogovoru = v; if(v) cenaController.clear(); }),
                       ),
                     ],
@@ -226,7 +225,7 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
                       padding: const EdgeInsets.only(top: 12),
                       child: CupertinoTextField(
                         controller: cenaController,
-                        keyboardType: const TextInputType.numberWithOptions(decimal: false, signed: false), // SAMO BROJEVI ZA CENU
+                        keyboardType: const TextInputType.numberWithOptions(decimal: false, signed: false), 
                         placeholder: "Cena (€)",
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.grey.shade300)),
@@ -273,7 +272,7 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
               width: double.infinity,
               height: 50,
               child: CupertinoButton(
-                color: Colors.blue,
+                color: CupertinoColors.activeBlue,
                 borderRadius: BorderRadius.circular(10),
                 onPressed: _postaviOglas,
                 child: const Text("Objavi Oglas", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
