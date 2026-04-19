@@ -9,7 +9,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  // Kontroleri za pretragu i filtere
   String pretragaText = '';
   String? filterBrend;
   
@@ -20,7 +19,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   final List<String> popularniBrendovi = ['Svi', 'Rolex', 'Omega', 'Patek Philippe', 'Audemars Piguet', 'Seiko', 'Breitling', 'Tag Heuer', 'Tissot', 'Casio'];
 
-  // Puni iOS Filteri
   void _otvoriFiltere() {
     showModalBottomSheet(
       context: context,
@@ -42,7 +40,6 @@ class _HomeScreenState extends State<HomeScreen> {
               const Text("Filteri", style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
               const SizedBox(height: 30),
 
-              // BRENDOVI
               const Text("BREND", style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.grey)),
               const SizedBox(height: 10),
               SizedBox(
@@ -63,7 +60,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
               const SizedBox(height: 30),
 
-              // CENA
               const Text("CENA (€)", style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.grey)),
               const SizedBox(height: 10),
               Row(
@@ -88,7 +84,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
               const SizedBox(height: 30),
 
-              // GODINA
               const Text("GODINA PROIZVODNJE", style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.grey)),
               const SizedBox(height: 10),
               Row(
@@ -113,7 +108,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
               const SizedBox(height: 40),
 
-              // DUGME
               SizedBox(
                 width: double.infinity,
                 height: 55,
@@ -137,16 +131,15 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 59, 214, 154),
+      backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF89CFF0), // Baby Blue
+        backgroundColor: const Color(0xFF89CFF0), 
         title: const Text("NadjiSat", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 26)),
         centerTitle: true,
         elevation: 0,
       ),
       body: Column(
         children: [
-          // PRETRAGA BAR SA IKONICOM ZA FILTERE
           Container(
             color: const Color(0xFF89CFF0),
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
@@ -172,8 +165,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
           ),
-
-          // LISTA SATOVA (PUNI KARTICE)
           Expanded(
             child: StreamBuilder<List<Map<String, dynamic>>>(
               stream: Supabase.instance.client.from('satovi').stream(primaryKey: ['id']).order('created_at', ascending: false),
@@ -181,24 +172,19 @@ class _HomeScreenState extends State<HomeScreen> {
                 if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CupertinoActivityIndicator());
                 if (!snapshot.hasData || snapshot.data!.isEmpty) return const Center(child: Text("Nema dostupnih satova."));
 
-                // LOGIKA FILTRIRANJA
                 final satovi = snapshot.data!.where((sat) {
-                  // Pretraga po tekstu (Naslov ili Brend)
                   final naslov = (sat['naslov'] ?? '').toString().toLowerCase();
                   final brend = (sat['brend'] ?? '').toString().toLowerCase();
                   final pretraga = pretragaText.toLowerCase();
                   if (pretraga.isNotEmpty && !naslov.contains(pretraga) && !brend.contains(pretraga)) return false;
 
-                  // Brend filter
                   if (filterBrend != null && sat['brend'] != filterBrend) return false;
 
-                  // Cena filter
                   final cena = int.tryParse(sat['cena'].toString()) ?? 0;
                   final minC = int.tryParse(minCenaController.text) ?? 0;
                   final maxC = int.tryParse(maxCenaController.text) ?? 9999999;
                   if (cena < minC || cena > maxC) return false;
 
-                  // Godina filter
                   final god = int.tryParse(sat['godina'].toString()) ?? 0;
                   final minG = int.tryParse(minGodinaController.text) ?? 0;
                   final maxG = int.tryParse(maxGodinaController.text) ?? 2025;
@@ -226,7 +212,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         borderRadius: BorderRadius.circular(18),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withAlpha(15), // Bezbedna senka, bez crvenih linija
+                            color: Colors.black.withAlpha(15), 
                             blurRadius: 10, 
                             offset: const Offset(0, 5)
                           )
@@ -243,7 +229,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 width: double.infinity,
                                 child: prvaSlika != null 
                                   ? Image.network(prvaSlika, fit: BoxFit.cover)
-                                  : const Icon(Icons.watch, size: 50, color: Colors.grey), // Bezbedna ikonica
+                                  : const Icon(Icons.watch, size: 50, color: Colors.grey), 
                               ),
                             ),
                           ),

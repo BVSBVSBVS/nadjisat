@@ -215,7 +215,7 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
                       const Spacer(),
                       CupertinoSwitch(
                         value: cenaPoDogovoru,
-                        activeColor: CupertinoColors.activeBlue, // Fix za deprecated activeColor
+                        activeTrackColor: CupertinoColors.activeBlue, // Fix za deprecated activeTrackColor
                         onChanged: (v) => setState(() { cenaPoDogovoru = v; if(v) cenaController.clear(); }),
                       ),
                     ],
