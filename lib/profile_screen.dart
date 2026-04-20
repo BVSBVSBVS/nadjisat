@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+// OVO SU KLJUČNI IMPORTI KOJI SU TI FALILI:
+import 'main.dart';
+import 'login_screen.dart';
 import 'edit_oglas_screen.dart';
-import 'main.dart'; // <-- DODALI SMO OVO DA VIDI GLOBALNI PREKIDAČ
- import 'login_screen.dart'; 
- 
+import 'oglas_detalji_screen.dart';
+import 'uredi_profil_screen.dart';
+
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
   @override
@@ -56,9 +60,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // NE ZABORAVI DA DODAS OVAJ IMPORT NA VRH FAJLA:
-// import 'login_screen.dart';
-
     if (user == null) {
       return Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -82,11 +83,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
     }
 
-    // OVAKO PROVERAVAMO DA LI JE TEMA TRENUTNO TAMNA ILI SVETLA U CELOJ APLIKACIJI
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor, // Automatski prati temu
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor, 
       appBar: AppBar(
         title: const Text("Profil", style: TextStyle(fontWeight: FontWeight.bold)),
         actions: [
@@ -103,7 +103,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const SizedBox(height: 20),
                   const CircleAvatar(radius: 40, backgroundColor: Colors.blue, child: Icon(Icons.person, size: 40, color: Colors.white)),
                   const SizedBox(height: 15),
-                  Text(user?.email?.split('@')[0] ?? "Korisnik", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: isDarkMode ? Colors.white : Colors.black)),
+                  Text(user?.email?.split('@')[0] ?? "Korisnik", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black)),
                   Text(user?.email ?? "", style: const TextStyle(color: Colors.grey, fontSize: 14)),
                   const SizedBox(height: 10),
                   const Row(
@@ -121,19 +121,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
             
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 16),
-              // Ako je mrak, stavi tamno sivu karticu, ako je svetlo stavi belu
-              decoration: BoxDecoration(color: isDarkMode ? const Color(0xFF1C1C1E) : Colors.white, borderRadius: BorderRadius.circular(12)),
+              decoration: BoxDecoration(color: isDark ? const Color(0xFF1C1C1E) : Colors.white, borderRadius: BorderRadius.circular(12)),
               child: Column(
                 children: [
                   ListTile(
                     leading: const Icon(CupertinoIcons.moon_fill, color: Colors.purple),
-                    title: Text("Dark Mode", style: TextStyle(color: isDarkMode ? Colors.white : Colors.black)),
+                    title: Text("Dark Mode", style: TextStyle(color: isDark ? Colors.white : Colors.black)),
                     trailing: CupertinoSwitch(
-                      // VREDNOST SADA ČITA IZ MAIN.DART
                       value: isDarkModeGlobal.value,
-                      activeTrackColor: Colors.blue,
+                      activeColor: Colors.blue,
                       onChanged: (v) {
-                        // KADA KLIKNEŠ, OVO JAVLJA MAIN.DART FAJLU DA ZAMRAČI SVE!
                         setState(() {
                           isDarkModeGlobal.value = v;
                         });
@@ -143,9 +140,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const Divider(height: 1),
                   ListTile(
                     leading: const Icon(CupertinoIcons.person_crop_circle, color: Colors.blue),
-                    title: Text("Uredi profil", style: TextStyle(color: isDarkMode ? Colors.white : Colors.black)),
+                    title: Text("Uredi profil", style: TextStyle(color: isDark ? Colors.white : Colors.black)),
                     trailing: const Icon(Icons.chevron_right, color: Colors.grey),
-                    onTap: () {},
+                    onTap: () async {
+                      final rez = await Navigator.push(context, MaterialPageRoute(builder: (context) => const UrediProfilScreen()));
+                      if (rez == true) setState(() {});
+                    },
                   ),
                 ],
               ),
@@ -155,14 +155,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              child: Text("Moji oglasi", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: isDarkMode ? Colors.white : Colors.black)),
+              child: Text("Moji oglasi", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black)),
             ),
 
             StreamBuilder<List<Map<String, dynamic>>>(
               stream: Supabase.instance.client.from('satovi').stream(primaryKey: ['id']).eq('user_id', user!.id).order('created_at', ascending: false),
               builder: (context, snapshot) {
                 if (!snapshot.hasData) return const Center(child: CupertinoActivityIndicator());
-                if (snapshot.data!.isEmpty) return const Center(child: Text("Nemate aktivnih oglasa.", style: TextStyle(color: Colors.grey)));
+                if (snapshot.data!.isEmpty) return const Padding(padding: EdgeInsets.all(20.0), child: Center(child: Text("Nemate aktivnih oglasa.", style: TextStyle(color: Colors.grey))));
 
                 return ListView.builder(
                   shrinkWrap: true,
@@ -172,16 +172,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     final oglas = snapshot.data![index];
                     final naslov = oglas['naslov'] ?? "${oglas['brend']} ${oglas['model']}";
 
-                    return Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                      decoration: BoxDecoration(color: isDarkMode ? const Color(0xFF1C1C1E) : Colors.white, borderRadius: BorderRadius.circular(12)),
-                      child: ListTile(
-                        leading: const Icon(Icons.watch, color: Colors.grey),
-                        title: Text(naslov, style: TextStyle(color: isDarkMode ? Colors.white : Colors.black, fontWeight: FontWeight.w500)),
-                        subtitle: Text(oglas['cena_dogovor'] == true ? "Po dogovoru" : "${oglas['cena']} €", style: const TextStyle(color: Colors.grey)),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.edit, size: 20, color: Colors.grey),
-                          onPressed: () => _prikaziOpcijeOglasa(context, oglas, naslov),
+                    return GestureDetector(
+                      onTap: () {
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => OglasDetaljiScreen(oglas: oglas)));
+                      },
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                        decoration: BoxDecoration(color: isDark ? const Color(0xFF1C1C1E) : Colors.white, borderRadius: BorderRadius.circular(12)),
+                        child: ListTile(
+                          leading: const Icon(Icons.watch, color: Colors.grey),
+                          title: Text(naslov, style: TextStyle(color: isDark ? Colors.white : Colors.black, fontWeight: FontWeight.w500)),
+                          subtitle: Text(oglas['cena_dogovor'] == true ? "Po dogovoru" : "${oglas['cena']} €", style: const TextStyle(color: Colors.grey)),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.edit, size: 20, color: Colors.grey),
+                            onPressed: () => _prikaziOpcijeOglasa(context, oglas, naslov),
+                          ),
                         ),
                       ),
                     );

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'oglas_detalji_screen.dart'; // Povezan ekran za otvaranje oglasa
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -10,76 +11,105 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   String pretragaText = '';
+  final user = Supabase.instance.client.auth.currentUser;
   
-  String? filterBrend, filterModel, filterStanje, filterMaterijal, filterStaklo, filterMehanizam, filterVodootpornost, filterKutija;
+  // Lista ID-jeva oglasa koje ovaj korisnik prati
+  Set<int> praceniOglasiIds = {};
+
+  String? filterBrend, filterModel, filterStanje, filterMaterijal, filterMehanizam, filterNamena, filterPrecnik, filterMaterijalNarukvice, filterBojaBrojcanika, filterGarancija;
+  bool? filterKutija;
+  bool? filterPapiri;
   final minCenaController = TextEditingController();
   final maxCenaController = TextEditingController();
-  final minGodinaController = TextEditingController();
-  final maxGodinaController = TextEditingController();
 
   final Map<String, List<String>> brendoviIModeli = {
     'Svi': [],
     'A. Lange & Söhne': ['1815', 'Datograph', 'Grand Lange 1', 'Lange 1', 'Saxonia', 'Zeitwerk', 'Richard Lange'],
     'Audemars Piguet': ['Royal Oak', 'Royal Oak Offshore', 'Code 11.59', 'Jules Audemars', 'Millenary'],
-    'Ball Watch': ['Engineer Hydrocarbon', 'Engineer II', 'Engineer III', 'Trainmaster', 'Fireman', 'Roadmaster'],
     'Baume & Mercier': ['Clifton', 'Classima', 'Riviera', 'Hampton', 'Capeland', 'Baumatic'],
     'Blancpain': ['Fifty Fathoms', 'Villeret', 'Bathyscaphe', 'Air Command', 'Léman'],
     'Breguet': ['Classique', 'Marine', 'Type XX', 'Reine de Naples', 'Tradition', 'Heritage'],
     'Breitling': ['Navitimer', 'Chronomat', 'Superocean', 'Avenger', 'Premier', 'Top Time', 'Endurance Pro'],
     'Bulgari': ['Octo Finissimo', 'Octo Roma', 'Serpenti', 'B.zero1', 'Aluminium'],
-    'Carl F. Bucherer': ['Manero', 'Patravi', 'Heritage', 'Adamavi', 'ScubaTec'],
     'Cartier': ['Tank', 'Santos', 'Ballon Bleu', 'Pasha', 'Drive de Cartier', 'Panthère'],
     'Casio': ['G-Shock', 'Edifice', 'Pro Trek', 'Baby-G', 'Vintage', 'Oceanus', 'Databank'],
-    'Chopard': ['Alpine Eagle', 'L.U.C', 'Mille Miglia', 'Happy Sport', 'Happy Diamonds'],
     'Citizen': ['Promaster', 'Eco-Drive One', 'The Citizen', 'Attesa', 'Series 8', 'Satellite Wave'],
-    'Corum': ['Admiral', 'Golden Bridge', 'Bubble', 'Heritage', 'Ti-Bridge'],
-    'Czapek': ['Antarctique', 'Quai des Bergues', 'Faubourg de Cracovie', 'Place Vendôme'],
-    'Damasko': ['DS30', 'DC56', 'DC57', 'DC66', 'DA36', 'DK10', 'DSub1'],
-    'Doxa': ['Sub 200', 'Sub 300', 'Sub 300T', 'Sub 600T', 'Sub 1500T', 'Army'],
-    'Eberhard & Co.': ['Chrono 4', 'Tazio Nuvolari', 'Traversetolo', 'Scafograf', '8 Jours'],
-    'Eterna': ['KonTiki', 'Heritage', 'Royal Kontiki', 'Eternity', 'Adventic'],
-    'F.P. Journe': ['Chronomètre Bleu', 'Chronomètre Souverain', 'Octa Automatique', 'Tourbillon Souverain'],
-    'Farer': ['Lander', 'Worldtimer', 'GMT', 'Chronograph', 'Aqua Compressor', 'Field'],
-    'Fortis': ['Flieger', 'Marinemaster', 'Cosmonaut', 'Aeromaster', 'Stratoliner'],
-    'Franck Muller': ['Vanguard', 'Cintrée Curvex', 'Casablanca', 'Master Square', 'Long Island'],
-    'Girard-Perregaux': ['Laureato', 'Bridges', 'Vintage 1945', '1966', 'Free Bridge'],
     'Grand Seiko': ['Heritage', 'Elegance', 'Sport', 'Evolution 9', 'Masterpiece'],
-    'Hamilton': ['Khaki Field', 'Khaki Aviation', 'Khaki Navy', 'Ventura', 'Jazzmaster', 'American Classic'],
-    'H. Moser & Cie.': ['Endeavour', 'Pioneer', 'Streamliner', 'Heritage'],
     'Hublot': ['Big Bang', 'Classic Fusion', 'Spirit of Big Bang', 'MP Collection', 'King Power'],
     'IWC Schaffhausen': ['Portugieser', 'Big Pilot', 'Pilot\'s Watch', 'Ingenieur', 'Portofino', 'Da Vinci'],
     'Jaeger-LeCoultre': ['Reverso', 'Master Control', 'Polaris', 'Atmos', 'Rendez-Vous', 'Geophysic'],
-    'Junghans': ['Max Bill', 'Meister', 'Form', 'Spektrum'],
-    'Laco': ['Flieger', 'Navy', 'Squad', 'Classic', 'Chronograph'],
     'Longines': ['HydroConquest', 'Spirit', 'Master Collection', 'Heritage', 'Conquest', 'DolceVita', 'Legend Diver'],
-    'Louis Moinet': ['Tourbillon', 'Chronograph', 'Moon Race', 'Space Walker'],
-    'Maurice Lacroix': ['Aikon', 'Masterpiece', 'Pontos', 'Eliros'],
-    'MB&F': ['Horological Machine', 'Legacy Machine', 'Performance Art'],
-    'Montblanc': ['Heritage', 'Star Legacy', '1858', 'Summit', 'TimeWalker'],
-    'Mido': ['Multifort', 'Ocean Star', 'Baroncelli', 'Commander'],
-    'Nomos Glashütte': ['Tangente', 'Club', 'Orion', 'Ludwig', 'Metro', 'Ahoi'],
     'Omega': ['Speedmaster', 'Seamaster', 'Constellation', 'De Ville', 'Aqua Terra'],
     'Oris': ['Aquis', 'Big Crown', 'Divers Sixty-Five', 'Artelier', 'ProPilot'],
     'Panerai': ['Luminor', 'Radiomir', 'Submersible', 'Due'],
-    'Parmigiani Fleurier': ['Tonda', 'Kalpa', 'Toric', 'Bugatti'],
     'Patek Philippe': ['Nautilus', 'Calatrava', 'Aquanaut', 'Grand Complications', 'Annual Calendar'],
-    'Piaget': ['Altiplano', 'Polo', 'Possession', 'Limelight'],
-    'Rado': ['Captain Cook', 'Ceramica', 'DiaStar', 'True Thinline', 'Centrix'],
-    'Raymond Weil': ['Freelancer', 'Maestro', 'Toccata', 'Tango'],
-    'Richard Mille': ['RM 011', 'RM 027', 'RM 035', 'RM 055', 'RM 067'],
     'Rolex': ['Submariner', 'Daytona', 'Datejust', 'GMT-Master II', 'Explorer', 'Day-Date', 'Sea-Dweller'],
-    'Roger Dubuis': ['Excalibur', 'Velvet', 'Knights of the Round Table'],
     'Seiko': ['Prospex', 'Presage', 'Astron', '5 Sports', 'King Seiko', 'Premier'],
-    'Sinn': ['U1', '104', '556', '103', 'EZM'],
     'TAG Heuer': ['Carrera', 'Monaco', 'Aquaracer', 'Formula 1', 'Autavia', 'Connected'],
     'Tissot': ['PRX', 'Seastar', 'Le Locle', 'Gentleman', 'T-Touch', 'Chemin des Tourelles'],
     'Tudor': ['Black Bay', 'Pelagos', 'Ranger', 'Royal', '1926'],
     'Vacheron Constantin': ['Overseas', 'Patrimony', 'Traditionnelle', 'Fiftysix', 'Historiques'],
     'Zenith': ['Chronomaster', 'Defy', 'Elite', 'Pilot'],
   };
-  final List<String> stanja = ['Sve', 'Novo (Nenošeno)', 'Odlično', 'Vrlo dobro', 'Dobro', 'Za delove'];
-  final List<String> materijali = ['Sve', 'Čelik', 'Zlato', 'Titanijum', 'Keramika', 'Platina', 'Karbon'];
-  final List<String> mehanizmi = ['Sve', 'Automatik', 'Kvarcni', 'Ručno navijanje', 'Spring Drive'];
+
+  final List<String> namene = ['Sve', 'Dres (Dress)', 'Ronilački (Diver)', 'Hronograf (Chronograph)', 'Pilot (Aviator)', 'Sportski/GADA', 'Luksuzni', 'Smartwatch'];
+  final List<String> mehanizmi = ['Sve', 'Automatik', 'Manuelni', 'Kvarcni', 'Spring Drive', 'Solar', 'Kinetic'];
+  final List<String> precnici = ['Sve', 'Do 34mm', '36mm', '38mm', '40mm', '42mm', '44mm', '46mm+'];
+  final List<String> materijali = ['Sve', 'Čelik', 'Zlato (18k)', 'Titanijum', 'Platina', 'Keramika', 'Bronza', 'Guma/Plastika'];
+  final List<String> materijaliNarukvice = ['Sve', 'Čelik', 'Koža', 'Guma', 'Tekstil/Nato', 'Titanijum', 'Zlato'];
+  final List<String> bojeBrojcanika = ['Sve', 'Crna', 'Plava', 'Bela/Srebrna', 'Zelena', 'Siva', 'Zlatna', 'Druga'];
+  final List<String> stanja = ['Sve', '1. Novo sa folijama', '2. Kao novo', '3. Odlično', '4. Dobro', '5. Vidljivi tragovi korišćenja'];
+  final List<String> opcijeGarancije = ['Sve', 'Nema garanciju', 'Radna garancija', '1 godina', '2+ godine', 'Važeća fabrička'];
+
+  @override
+  void initState() {
+    super.initState();
+    _ucitajPracene();
+  }
+
+  Future<void> _ucitajPracene() async {
+    if (user == null) return;
+    try {
+      final response = await Supabase.instance.client.from('praceni_oglasi').select('oglas_id').eq('user_id', user!.id);
+      if (mounted) {
+        setState(() {
+          praceniOglasiIds = response.map((e) => e['oglas_id'] as int).toSet();
+        });
+      }
+    } catch (e) {
+      debugPrint("Greska pri ucitavanju pracenih: $e");
+    }
+  }
+
+  Future<void> _togglePraceni(int oglasId) async {
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Morate biti prijavljeni da biste pratili oglase.")));
+      return;
+    }
+
+    final isPracen = praceniOglasiIds.contains(oglasId);
+
+    setState(() {
+      if (isPracen) {
+        praceniOglasiIds.remove(oglasId);
+      } else {
+        praceniOglasiIds.add(oglasId);
+      }
+    });
+
+    try {
+      if (isPracen) {
+        await Supabase.instance.client.from('praceni_oglasi').delete().eq('user_id', user!.id).eq('oglas_id', oglasId);
+      } else {
+        await Supabase.instance.client.from('praceni_oglasi').insert({'user_id': user!.id, 'oglas_id': oglasId});
+      }
+    } catch (e) {
+      setState(() {
+        if (isPracen) praceniOglasiIds.add(oglasId); else praceniOglasiIds.remove(oglasId);
+      });
+      if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Greška: $e")));
+    }
+  }
 
   void _prikaziIOSPicker(String naslov, List<String> opcije, Function(String) onOdabrano) {
     showCupertinoModalPopup(
@@ -123,13 +153,16 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-           Text(label, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)), 
-            Row(
-              children: [
-                Text(vrednost ?? "Sve", style: TextStyle(color: isDark ? Colors.white : Colors.black, fontWeight: FontWeight.w500)),
-                const SizedBox(width: 5),
-                const Icon(CupertinoIcons.chevron_down, size: 16, color: Colors.grey),
-              ],
+            Text(label, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+            Expanded(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Flexible(child: Text(vrednost ?? "Sve", overflow: TextOverflow.ellipsis, style: TextStyle(color: isDark ? Colors.white : Colors.black, fontWeight: FontWeight.w500))),
+                  const SizedBox(width: 5),
+                  const Icon(CupertinoIcons.chevron_down, size: 16, color: Colors.grey),
+                ],
+              ),
             )
           ],
         ),
@@ -153,17 +186,13 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               Center(child: Container(width: 40, height: 5, decoration: BoxDecoration(color: Colors.grey[400], borderRadius: BorderRadius.circular(10)))),
               const SizedBox(height: 20),
-              Text("Detaljni Filteri", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black)),
+              Text("Svi Filteri", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black)),
               const SizedBox(height: 20),
 
               _iosFilterDugme("Brend", filterBrend, brendoviIModeli.keys.toList(), (v) => setState(() { filterBrend = v == 'Svi' ? null : v; filterModel = null; })),
               if (filterBrend != null)
                 _iosFilterDugme("Model", filterModel, ['Svi', ...brendoviIModeli[filterBrend]!], (v) => setState(() => filterModel = v == 'Svi' ? null : v)),
               
-              _iosFilterDugme("Stanje", filterStanje, stanja, (v) => setState(() => filterStanje = v == 'Sve' ? null : v)),
-              _iosFilterDugme("Materijal", filterMaterijal, materijali, (v) => setState(() => filterMaterijal = v == 'Sve' ? null : v)),
-              _iosFilterDugme("Mehanizam", filterMehanizam, mehanizmi, (v) => setState(() => filterMehanizam = v == 'Sve' ? null : v)),
-
               const SizedBox(height: 15),
               const Text("CENA (€)", style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.grey)),
               const SizedBox(height: 10),
@@ -174,6 +203,38 @@ class _HomeScreenState extends State<HomeScreen> {
                   Expanded(child: CupertinoTextField(style: TextStyle(color: isDark ? Colors.white : Colors.black), controller: maxCenaController, placeholder: "Do", keyboardType: TextInputType.number, padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: isDark ? Colors.grey[800] : Colors.grey[100], borderRadius: BorderRadius.circular(10)))),
                 ],
               ),
+              const SizedBox(height: 15),
+
+              _iosFilterDugme("Kategorija / Namjena", filterNamena, namene, (v) => setState(() => filterNamena = v == 'Sve' ? null : v)),
+              _iosFilterDugme("Stanje", filterStanje, stanja, (v) => setState(() => filterStanje = v == 'Sve' ? null : v)),
+              _iosFilterDugme("Garancija", filterGarancija, opcijeGarancije, (v) => setState(() => filterGarancija = v == 'Sve' ? null : v)),
+              _iosFilterDugme("Mehanizam", filterMehanizam, mehanizmi, (v) => setState(() => filterMehanizam = v == 'Sve' ? null : v)),
+              _iosFilterDugme("Prečnik", filterPrecnik, precnici, (v) => setState(() => filterPrecnik = v == 'Sve' ? null : v)),
+              _iosFilterDugme("Materijal kućišta", filterMaterijal, materijali, (v) => setState(() => filterMaterijal = v == 'Sve' ? null : v)),
+              _iosFilterDugme("Materijal narukvice", filterMaterijalNarukvice, materijaliNarukvice, (v) => setState(() => filterMaterijalNarukvice = v == 'Sve' ? null : v)),
+              _iosFilterDugme("Boja brojčanika", filterBojaBrojcanika, bojeBrojcanika, (v) => setState(() => filterBojaBrojcanika = v == 'Sve' ? null : v)),
+
+              StatefulBuilder(
+                builder: (context, setModalState) {
+                  return Column(
+                    children: [
+                      CheckboxListTile(
+                        title: Text("Mora da ima kutiju", style: TextStyle(color: isDark ? Colors.white : Colors.black)),
+                        value: filterKutija ?? false,
+                        onChanged: (v) { setModalState(() => filterKutija = v! ? true : null); setState(() => filterKutija = v! ? true : null); },
+                        activeColor: Colors.blue,
+                      ),
+                      CheckboxListTile(
+                        title: Text("Mora da ima papire", style: TextStyle(color: isDark ? Colors.white : Colors.black)),
+                        value: filterPapiri ?? false,
+                        onChanged: (v) { setModalState(() => filterPapiri = v! ? true : null); setState(() => filterPapiri = v! ? true : null); },
+                        activeColor: Colors.blue,
+                      ),
+                    ],
+                  );
+                }
+              ),
+
               const SizedBox(height: 30),
               SizedBox(
                 width: double.infinity,
@@ -236,11 +297,20 @@ class _HomeScreenState extends State<HomeScreen> {
                 final satovi = snapshot.data!.where((sat) {
                   final naslov = (sat['naslov'] ?? '').toString().toLowerCase();
                   if (pretragaText.isNotEmpty && !naslov.contains(pretragaText)) return false;
+                  
+                  // PRIMENA SVIH FILTERA
                   if (filterBrend != null && sat['brend'] != filterBrend) return false;
                   if (filterModel != null && sat['model'] != filterModel) return false;
                   if (filterStanje != null && sat['stanje'] != filterStanje) return false;
                   if (filterMaterijal != null && sat['materijal'] != filterMaterijal) return false;
                   if (filterMehanizam != null && sat['mehanizam'] != filterMehanizam) return false;
+                  if (filterNamena != null && sat['namena'] != filterNamena) return false;
+                  if (filterPrecnik != null && sat['precnik'] != filterPrecnik) return false;
+                  if (filterMaterijalNarukvice != null && sat['materijal_narukvice'] != filterMaterijalNarukvice) return false;
+                  if (filterBojaBrojcanika != null && sat['boja_brojcanika'] != filterBojaBrojcanika) return false;
+                  if (filterGarancija != null && sat['garancija'] != filterGarancija) return false;
+                  if (filterKutija == true && sat['originalna_kutija'] != true) return false;
+                  if (filterPapiri == true && sat['originalni_papiri'] != true) return false;
 
                   final cena = int.tryParse(sat['cena'].toString()) ?? 0;
                   final minC = int.tryParse(minCenaController.text) ?? 0;
@@ -258,38 +328,75 @@ class _HomeScreenState extends State<HomeScreen> {
                   itemCount: satovi.length,
                   itemBuilder: (context, index) {
                     final sat = satovi[index];
+                    final oglasId = sat['id'] as int;
                     final slikeStr = sat['slike']?.toString() ?? "";
                     final prvaSlika = slikeStr.isNotEmpty ? slikeStr.split(',')[0] : null;
+                    
+                    final isPracen = praceniOglasiIds.contains(oglasId);
 
-                    return Container(
-                      decoration: BoxDecoration(color: isDark ? const Color(0xFF1C1C1E) : Colors.white, borderRadius: BorderRadius.circular(15), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 10), blurRadius: 10, offset: const Offset(0, 5))]),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: ClipRRect(
-                              borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
-                              child: Container(
-                                color: isDark ? Colors.grey[900] : Colors.grey[100],
-                                width: double.infinity,
-                                // OVO JE TAJNA ZA UBRZAVANJE - cacheWidth smanjuje potrošnju RAM-a za 80%
-                                child: prvaSlika != null ? Image.network(prvaSlika, fit: BoxFit.cover, cacheWidth: 400) : const Icon(Icons.watch, size: 40, color: Colors.grey),
-                              ),
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(10),
-                            child: Column(
+                    return GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context, 
+                          MaterialPageRoute(builder: (context) => OglasDetaljiScreen(oglas: sat))
+                        );
+                      },
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: isDark ? const Color(0xFF1C1C1E) : Colors.white, 
+                          borderRadius: BorderRadius.circular(15), 
+                          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 5))]
+                        ),
+                        child: Stack(
+                          children: [
+                            Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(sat['cena_dogovor'] == true ? "Po dogovoru" : "${sat['cena']} €", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: isDark ? Colors.white : Colors.black)),
-                                const SizedBox(height: 2),
-                                Text("${sat['brend']}", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.blueAccent)),
-                                Text("${sat['model']}", style: const TextStyle(fontSize: 11, color: Colors.grey), maxLines: 1, overflow: TextOverflow.ellipsis),
+                                Expanded(
+                                  child: ClipRRect(
+                                    borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
+                                    child: Container(
+                                      color: isDark ? Colors.grey[900] : Colors.grey[100],
+                                      width: double.infinity,
+                                      child: prvaSlika != null ? Image.network(prvaSlika, fit: BoxFit.cover, cacheWidth: 400) : const Icon(Icons.watch, size: 40, color: Colors.grey),
+                                    ),
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.all(10),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(sat['cena_dogovor'] == true ? "Po dogovoru" : "${sat['cena']} €", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: isDark ? Colors.white : Colors.black)),
+                                      const SizedBox(height: 2),
+                                      Text("${sat['brend']}", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.blueAccent)),
+                                      Text("${sat['model']}", style: const TextStyle(fontSize: 11, color: Colors.grey), maxLines: 1, overflow: TextOverflow.ellipsis),
+                                    ],
+                                  ),
+                                )
                               ],
                             ),
-                          )
-                        ],
+                            Positioned(
+                              top: 5,
+                              right: 5,
+                              child: GestureDetector(
+                                onTap: () => _togglePraceni(oglasId),
+                                child: Container(
+                                  padding: const EdgeInsets.all(6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withOpacity(0.5),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    isPracen ? CupertinoIcons.heart_fill : CupertinoIcons.heart,
+                                    color: isPracen ? Colors.red : Colors.white,
+                                    size: 20,
+                                  ),
+                                ),
+                              ),
+                            )
+                          ],
+                        ),
                       ),
                     );
                   },

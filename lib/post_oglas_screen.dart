@@ -18,10 +18,10 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
   final refBrojController = TextEditingController();
 
   // --- 2. TEHNIČKE SPECIFIKACIJE ---
-  String? namena, mehanizam, precnik, materijalKucista, materijalNarukvice, bojaBrojcanika, vodootpornost;
+  String? namena, mehanizam, precnik, materijalKucista, materijalNarukvice, bojaBrojcanika;
 
   // --- 3. STANJE I OPREMA ---
-  String? stanjeSata;
+  String? stanjeSata, garancija;
   bool imaKutiju = false;
   bool imaPapire = false;
   final servisController = TextEditingController();
@@ -37,60 +37,29 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
   final opisController = TextEditingController();
 
   // --- BAZE PODATAKA ZA MENIJE ---
- final Map<String, List<String>> brendoviIModeli = {
+  final Map<String, List<String>> brendoviIModeli = {
     'Svi': [],
     'A. Lange & Söhne': ['1815', 'Datograph', 'Grand Lange 1', 'Lange 1', 'Saxonia', 'Zeitwerk', 'Richard Lange'],
     'Audemars Piguet': ['Royal Oak', 'Royal Oak Offshore', 'Code 11.59', 'Jules Audemars', 'Millenary'],
-    'Ball Watch': ['Engineer Hydrocarbon', 'Engineer II', 'Engineer III', 'Trainmaster', 'Fireman', 'Roadmaster'],
     'Baume & Mercier': ['Clifton', 'Classima', 'Riviera', 'Hampton', 'Capeland', 'Baumatic'],
     'Blancpain': ['Fifty Fathoms', 'Villeret', 'Bathyscaphe', 'Air Command', 'Léman'],
     'Breguet': ['Classique', 'Marine', 'Type XX', 'Reine de Naples', 'Tradition', 'Heritage'],
     'Breitling': ['Navitimer', 'Chronomat', 'Superocean', 'Avenger', 'Premier', 'Top Time', 'Endurance Pro'],
     'Bulgari': ['Octo Finissimo', 'Octo Roma', 'Serpenti', 'B.zero1', 'Aluminium'],
-    'Carl F. Bucherer': ['Manero', 'Patravi', 'Heritage', 'Adamavi', 'ScubaTec'],
     'Cartier': ['Tank', 'Santos', 'Ballon Bleu', 'Pasha', 'Drive de Cartier', 'Panthère'],
     'Casio': ['G-Shock', 'Edifice', 'Pro Trek', 'Baby-G', 'Vintage', 'Oceanus', 'Databank'],
-    'Chopard': ['Alpine Eagle', 'L.U.C', 'Mille Miglia', 'Happy Sport', 'Happy Diamonds'],
     'Citizen': ['Promaster', 'Eco-Drive One', 'The Citizen', 'Attesa', 'Series 8', 'Satellite Wave'],
-    'Corum': ['Admiral', 'Golden Bridge', 'Bubble', 'Heritage', 'Ti-Bridge'],
-    'Czapek': ['Antarctique', 'Quai des Bergues', 'Faubourg de Cracovie', 'Place Vendôme'],
-    'Damasko': ['DS30', 'DC56', 'DC57', 'DC66', 'DA36', 'DK10', 'DSub1'],
-    'Doxa': ['Sub 200', 'Sub 300', 'Sub 300T', 'Sub 600T', 'Sub 1500T', 'Army'],
-    'Eberhard & Co.': ['Chrono 4', 'Tazio Nuvolari', 'Traversetolo', 'Scafograf', '8 Jours'],
-    'Eterna': ['KonTiki', 'Heritage', 'Royal Kontiki', 'Eternity', 'Adventic'],
-    'F.P. Journe': ['Chronomètre Bleu', 'Chronomètre Souverain', 'Octa Automatique', 'Tourbillon Souverain'],
-    'Farer': ['Lander', 'Worldtimer', 'GMT', 'Chronograph', 'Aqua Compressor', 'Field'],
-    'Fortis': ['Flieger', 'Marinemaster', 'Cosmonaut', 'Aeromaster', 'Stratoliner'],
-    'Franck Muller': ['Vanguard', 'Cintrée Curvex', 'Casablanca', 'Master Square', 'Long Island'],
-    'Girard-Perregaux': ['Laureato', 'Bridges', 'Vintage 1945', '1966', 'Free Bridge'],
     'Grand Seiko': ['Heritage', 'Elegance', 'Sport', 'Evolution 9', 'Masterpiece'],
-    'Hamilton': ['Khaki Field', 'Khaki Aviation', 'Khaki Navy', 'Ventura', 'Jazzmaster', 'American Classic'],
-    'H. Moser & Cie.': ['Endeavour', 'Pioneer', 'Streamliner', 'Heritage'],
     'Hublot': ['Big Bang', 'Classic Fusion', 'Spirit of Big Bang', 'MP Collection', 'King Power'],
     'IWC Schaffhausen': ['Portugieser', 'Big Pilot', 'Pilot\'s Watch', 'Ingenieur', 'Portofino', 'Da Vinci'],
     'Jaeger-LeCoultre': ['Reverso', 'Master Control', 'Polaris', 'Atmos', 'Rendez-Vous', 'Geophysic'],
-    'Junghans': ['Max Bill', 'Meister', 'Form', 'Spektrum'],
-    'Laco': ['Flieger', 'Navy', 'Squad', 'Classic', 'Chronograph'],
     'Longines': ['HydroConquest', 'Spirit', 'Master Collection', 'Heritage', 'Conquest', 'DolceVita', 'Legend Diver'],
-    'Louis Moinet': ['Tourbillon', 'Chronograph', 'Moon Race', 'Space Walker'],
-    'Maurice Lacroix': ['Aikon', 'Masterpiece', 'Pontos', 'Eliros'],
-    'MB&F': ['Horological Machine', 'Legacy Machine', 'Performance Art'],
-    'Montblanc': ['Heritage', 'Star Legacy', '1858', 'Summit', 'TimeWalker'],
-    'Mido': ['Multifort', 'Ocean Star', 'Baroncelli', 'Commander'],
-    'Nomos Glashütte': ['Tangente', 'Club', 'Orion', 'Ludwig', 'Metro', 'Ahoi'],
     'Omega': ['Speedmaster', 'Seamaster', 'Constellation', 'De Ville', 'Aqua Terra'],
     'Oris': ['Aquis', 'Big Crown', 'Divers Sixty-Five', 'Artelier', 'ProPilot'],
     'Panerai': ['Luminor', 'Radiomir', 'Submersible', 'Due'],
-    'Parmigiani Fleurier': ['Tonda', 'Kalpa', 'Toric', 'Bugatti'],
     'Patek Philippe': ['Nautilus', 'Calatrava', 'Aquanaut', 'Grand Complications', 'Annual Calendar'],
-    'Piaget': ['Altiplano', 'Polo', 'Possession', 'Limelight'],
-    'Rado': ['Captain Cook', 'Ceramica', 'DiaStar', 'True Thinline', 'Centrix'],
-    'Raymond Weil': ['Freelancer', 'Maestro', 'Toccata', 'Tango'],
-    'Richard Mille': ['RM 011', 'RM 027', 'RM 035', 'RM 055', 'RM 067'],
     'Rolex': ['Submariner', 'Daytona', 'Datejust', 'GMT-Master II', 'Explorer', 'Day-Date', 'Sea-Dweller'],
-    'Roger Dubuis': ['Excalibur', 'Velvet', 'Knights of the Round Table'],
     'Seiko': ['Prospex', 'Presage', 'Astron', '5 Sports', 'King Seiko', 'Premier'],
-    'Sinn': ['U1', '104', '556', '103', 'EZM'],
     'TAG Heuer': ['Carrera', 'Monaco', 'Aquaracer', 'Formula 1', 'Autavia', 'Connected'],
     'Tissot': ['PRX', 'Seastar', 'Le Locle', 'Gentleman', 'T-Touch', 'Chemin des Tourelles'],
     'Tudor': ['Black Bay', 'Pelagos', 'Ranger', 'Royal', '1926'],
@@ -106,6 +75,7 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
   final List<String> materijaliNarukvice = ['Čelik', 'Koža', 'Guma', 'Tekstil/Nato', 'Titanijum', 'Zlato'];
   final List<String> bojeBrojcanika = ['Crna', 'Plava', 'Bela/Srebrna', 'Zelena', 'Siva', 'Zlatna', 'Druga'];
   final List<String> stanja = ['1. Novo sa folijama', '2. Kao novo', '3. Odlično', '4. Dobro', '5. Vidljivi tragovi korišćenja'];
+  final List<String> opcijeGarancije = ['Nema garanciju', 'Radna garancija', '1 godina', '2+ godine', 'Važeća fabrička'];
   final List<String> valute = ['EUR', 'RSD', 'KM'];
 
   Future<void> _izaberiSlike() async {
@@ -113,10 +83,10 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
     if (slike.isNotEmpty) {
       setState(() {
         izabraneSlike.addAll(slike);
-        if (izabraneSlike.length > 16) {
-          izabraneSlike = izabraneSlike.sublist(0, 16);
-          // OVO JE PRVI FIX (context.mounted)
-          if(context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Max 16 slika.")));
+        // OGRANIČENO NA 6 SLIKA KAO ŠTO SI TRAŽIO
+        if (izabraneSlike.length > 6) {
+          izabraneSlike = izabraneSlike.sublist(0, 6);
+          if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Možete dodati maksimalno 6 slika.")));
         }
       });
     }
@@ -136,8 +106,8 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
 
     try {
       final user = Supabase.instance.client.auth.currentUser;
-      
       List<String> slikeUrls = [];
+      
       for (var slika in izabraneSlike) {
         final bytes = await slika.readAsBytes();
         final imeFajla = '${DateTime.now().millisecondsSinceEpoch}_${slika.name}';
@@ -150,6 +120,7 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
         }
       }
 
+      // KONAČAN INSERT U BAZU (Strogo se pazi da imena kolona odgovaraju onima u bazi)
       await Supabase.instance.client.from('satovi').insert({
         'user_id': user?.id,
         'user_email': user?.email,
@@ -158,13 +129,14 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
         'model': izabranModel,
         'ref_broj': refBrojController.text.trim(),
         'godina': godina,
-        'namena': namena,
+        'namena': namena, // BAZA OČEKUJE OVO IME!
         'mehanizam': mehanizam,
         'precnik': precnik,
         'materijal': materijalKucista,
         'materijal_narukvice': materijalNarukvice,
         'boja_brojcanika': bojaBrojcanika,
         'stanje': stanjeSata,
+        'garancija': garancija, // NOVA KOLONA
         'originalna_kutija': imaKutiju,
         'originalni_papiri': imaPapire,
         'servisna_istorija': servisController.text.trim(),
@@ -177,13 +149,11 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
         'slike': slikeUrls.join(','),
       });
 
-      // OVO JE DRUGI FIX (context.mounted umesto samo mounted)
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Oglas uspješno postavljen!")));
       Navigator.pop(context); 
 
     } catch (e) {
-      // OVO JE TREĆI FIX
       if(!context.mounted) return;
       setState(() => isUploading = false);
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Greška: $e")));
@@ -236,16 +206,18 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
               child: ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
+                  
                   _buildSectionHeader("1. Identifikacija sata", CupertinoIcons.tag_fill),
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(color: isDark ? Colors.grey[900] : Colors.grey[100], borderRadius: BorderRadius.circular(12)),
                     child: Column(
                       children: [
-                        _buildDropdown("Brend *", izabranBrend, brendoviIModeli.keys.toList(), (v) => setState(() { izabranBrend = v; izabranModel = null; })),
+                        _buildDropdown("Brend *", izabranBrend, brendoviIModeli.keys.where((b) => b != 'Svi').toList(), (v) => setState(() { izabranBrend = v; izabranModel = null; })),
                         if (izabranBrend != null) 
                           _buildDropdown("Model *", izabranModel, brendoviIModeli[izabranBrend]!, (v) => setState(() => izabranModel = v)),
                         CupertinoTextField(
+                          style: TextStyle(color: isDark ? Colors.white : Colors.black),
                           controller: refBrojController, placeholder: "Referentni broj (npr. 116610LN)",
                           padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: isDark ? Colors.grey[800] : Colors.white, borderRadius: BorderRadius.circular(10)),
                         ),
@@ -278,24 +250,27 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
                     child: Column(
                       children: [
                         _buildDropdown("Stanje sata", stanjeSata, stanja, (v) => setState(() => stanjeSata = v)),
+                        _buildDropdown("Garancija", garancija, opcijeGarancije, (v) => setState(() => garancija = v)),
                         CheckboxListTile(
-                          title: const Text("Ima originalnu kutiju"),
+                          title: Text("Ima originalnu kutiju", style: TextStyle(color: isDark ? Colors.white : Colors.black)),
                           value: imaKutiju,
                           onChanged: (v) => setState(() => imaKutiju = v!),
                           activeColor: Colors.blue,
                         ),
                         CheckboxListTile(
-                          title: const Text("Ima originalne papire/garanciju"),
+                          title: Text("Ima originalne papire", style: TextStyle(color: isDark ? Colors.white : Colors.black)),
                           value: imaPapire,
                           onChanged: (v) => setState(() => imaPapire = v!),
                           activeColor: Colors.blue,
                         ),
                         CupertinoTextField(
+                          style: TextStyle(color: isDark ? Colors.white : Colors.black),
                           controller: servisController, placeholder: "Istorija servisa (Opciono)",
                           padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: isDark ? Colors.grey[800] : Colors.white, borderRadius: BorderRadius.circular(10)),
                         ),
                         const SizedBox(height: 12),
                         CupertinoTextField(
+                          style: TextStyle(color: isDark ? Colors.white : Colors.black),
                           controller: ostecenjaController, placeholder: "Opis oštećenja (Opciono)", maxLines: 2,
                           padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: isDark ? Colors.grey[800] : Colors.white, borderRadius: BorderRadius.circular(10)),
                         ),
@@ -304,7 +279,7 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
                           width: double.infinity,
                           child: CupertinoButton.filled(
                             onPressed: _izaberiSlike,
-                            child: const Text("📸 Dodaj slike sata (Max 16)"),
+                            child: const Text("📸 Dodaj slike sata (Max 6)"),
                           ),
                         ),
                         if (izabraneSlike.isNotEmpty)
@@ -330,6 +305,7 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
                             Expanded(
                               flex: 2,
                               child: CupertinoTextField(
+                                style: TextStyle(color: isDark ? Colors.white : Colors.black),
                                 controller: cenaController, placeholder: "Cijena *", keyboardType: TextInputType.number,
                                 padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: isDark ? Colors.grey[800] : Colors.white, borderRadius: BorderRadius.circular(10)),
                               ),
@@ -342,17 +318,19 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
                           ],
                         ),
                         CheckboxListTile(
-                          title: const Text("Moguća zamjena"),
+                          title: Text("Moguća zamjena", style: TextStyle(color: isDark ? Colors.white : Colors.black)),
                           value: zamena,
                           onChanged: (v) => setState(() => zamena = v!),
                           activeColor: Colors.blue,
                         ),
                         CupertinoTextField(
+                          style: TextStyle(color: isDark ? Colors.white : Colors.black),
                           controller: lokacijaController, placeholder: "Lokacija (Grad/Država)",
                           padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: isDark ? Colors.grey[800] : Colors.white, borderRadius: BorderRadius.circular(10)),
                         ),
                         const SizedBox(height: 12),
                         CupertinoTextField(
+                          style: TextStyle(color: isDark ? Colors.white : Colors.black),
                           controller: opisController, placeholder: "Dodatni opis (Sve što nije pokriveno gore)", maxLines: 4,
                           padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: isDark ? Colors.grey[800] : Colors.white, borderRadius: BorderRadius.circular(10)),
                         ),

@@ -3,9 +3,12 @@ import 'package:flutter/cupertino.dart';
 // Uvezi tvoje ekrane (proveri da li se fajlovi ovako zovu kod tebe)
 import 'home_screen.dart';
 import 'post_oglas_screen.dart';
-import 'profile_screen.dart'; // Ako imaš poseban ekran za profil
+import 'profile_screen.dart';
+import 'praceni_screen.dart';
+// Ako imaš poseban ekran za profil
 // import 'pratim_screen.dart'; // Ako imaš ekran za praćene oglase (ako ne, stavićemo prazan kontejner za sad)
-
+ 
+ 
 class MainLayout extends StatefulWidget {
   const MainLayout({super.key});
 
@@ -20,8 +23,8 @@ class _MainLayoutState extends State<MainLayout> {
   final List<Widget> _ekrani = [
     const HomeScreen(),
     const PostOglasScreen(),
-    Container(color: Colors.white, child: const Center(child: Text("Pratim - Uskoro"))), // Zameni sa tvojim ekranom ako ga imaš
-    const ProfileScreen(), // Ili kako god ti se zove ekran za profil/oglase
+  const PraceniScreen(),
+    const ProfileScreen(),
   ];
 
   void _naTapkanje(int index) {
