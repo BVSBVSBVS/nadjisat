@@ -14,7 +14,6 @@ class _HomeScreenState extends State<HomeScreen> {
   String pretragaText = '';
   final user = Supabase.instance.client.auth.currentUser;
   
-  // POPRAVLJENO: ID je sada String (tekst), a ne int (broj)!
   Set<String> praceniOglasiIds = {};
 
   String? filterBrend, filterModel, filterStanje, filterMaterijal, filterMehanizam, filterNamena, filterPrecnik, filterMaterijalNarukvice, filterBojaBrojcanika, filterGarancija;
@@ -25,11 +24,32 @@ class _HomeScreenState extends State<HomeScreen> {
 
   final Map<String, List<String>> brendoviIModeli = {
     'Svi': [],
-    'Rolex': ['Submariner', 'Daytona', 'Datejust', 'GMT-Master II', 'Explorer', 'Day-Date', 'Sea-Dweller'],
+    'A. Lange & Söhne': ['1815', 'Datograph', 'Grand Lange 1', 'Lange 1', 'Saxonia', 'Zeitwerk', 'Richard Lange'],
+    'Audemars Piguet': ['Royal Oak', 'Royal Oak Offshore', 'Code 11.59', 'Jules Audemars', 'Millenary'],
+    'Baume & Mercier': ['Clifton', 'Classima', 'Riviera', 'Hampton', 'Capeland', 'Baumatic'],
+    'Blancpain': ['Fifty Fathoms', 'Villeret', 'Bathyscaphe', 'Air Command', 'Léman'],
+    'Breguet': ['Classique', 'Marine', 'Type XX', 'Reine de Naples', 'Tradition', 'Heritage'],
+    'Breitling': ['Navitimer', 'Chronomat', 'Superocean', 'Avenger', 'Premier', 'Top Time', 'Endurance Pro'],
+    'Bulgari': ['Octo Finissimo', 'Octo Roma', 'Serpenti', 'B.zero1', 'Aluminium'],
+    'Cartier': ['Tank', 'Santos', 'Ballon Bleu', 'Pasha', 'Drive de Cartier', 'Panthère'],
+    'Casio': ['G-Shock', 'Edifice', 'Pro Trek', 'Baby-G', 'Vintage', 'Oceanus', 'Databank'],
+    'Citizen': ['Promaster', 'Eco-Drive One', 'The Citizen', 'Attesa', 'Series 8', 'Satellite Wave'],
+    'Grand Seiko': ['Heritage', 'Elegance', 'Sport', 'Evolution 9', 'Masterpiece'],
+    'Hublot': ['Big Bang', 'Classic Fusion', 'Spirit of Big Bang', 'MP Collection', 'King Power'],
+    'IWC Schaffhausen': ['Portugieser', 'Big Pilot', 'Pilot\'s Watch', 'Ingenieur', 'Portofino', 'Da Vinci'],
+    'Jaeger-LeCoultre': ['Reverso', 'Master Control', 'Polaris', 'Atmos', 'Rendez-Vous', 'Geophysic'],
+    'Longines': ['HydroConquest', 'Spirit', 'Master Collection', 'Heritage', 'Conquest', 'DolceVita', 'Legend Diver'],
     'Omega': ['Speedmaster', 'Seamaster', 'Constellation', 'De Ville', 'Aqua Terra'],
+    'Oris': ['Aquis', 'Big Crown', 'Divers Sixty-Five', 'Artelier', 'ProPilot'],
+    'Panerai': ['Luminor', 'Radiomir', 'Submersible', 'Due'],
+    'Patek Philippe': ['Nautilus', 'Calatrava', 'Aquanaut', 'Grand Complications', 'Annual Calendar'],
+    'Rolex': ['Submariner', 'Daytona', 'Datejust', 'GMT-Master II', 'Explorer', 'Day-Date', 'Sea-Dweller'],
     'Seiko': ['Prospex', 'Presage', 'Astron', '5 Sports', 'King Seiko', 'Premier'],
-    'TAG Heuer': ['Carrera', 'Monaco', 'Aquaracer', 'Formula 1', 'Autavia'],
-    'Casio': ['G-Shock', 'Edifice', 'Pro Trek', 'Baby-G', 'Vintage'],
+    'TAG Heuer': ['Carrera', 'Monaco', 'Aquaracer', 'Formula 1', 'Autavia', 'Connected'],
+    'Tissot': ['PRX', 'Seastar', 'Le Locle', 'Gentleman', 'T-Touch', 'Chemin des Tourelles'],
+    'Tudor': ['Black Bay', 'Pelagos', 'Ranger', 'Royal', '1926'],
+    'Vacheron Constantin': ['Overseas', 'Patrimony', 'Traditionnelle', 'Fiftysix', 'Historiques'],
+    'Zenith': ['Chronomaster', 'Defy', 'Elite', 'Pilot'],
   };
 
   final List<String> namene = ['Sve', 'Dres (Dress)', 'Ronilački (Diver)', 'Hronograf (Chronograph)', 'Pilot (Aviator)', 'Sportski/GADA', 'Luksuzni', 'Smartwatch'];
@@ -53,7 +73,6 @@ class _HomeScreenState extends State<HomeScreen> {
       final response = await Supabase.instance.client.from('praceni_oglasi').select('oglas_id').eq('user_id', user!.id);
       if (mounted) {
         setState(() {
-          // POPRAVLJENO: Čitamo ID kao String
           praceniOglasiIds = response.map((e) => e['oglas_id'].toString()).toSet();
         });
       }
@@ -62,7 +81,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  // POPRAVLJENO: oglasId je sada String
   Future<void> _togglePraceni(String oglasId) async {
     if (user == null) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Morate biti prijavljeni da biste pratili oglase.")));
@@ -187,6 +205,33 @@ class _HomeScreenState extends State<HomeScreen> {
 
               _iosFilterDugme("Kategorija / Namjena", filterNamena, namene, (v) => setState(() => filterNamena = v == 'Sve' ? null : v)),
               _iosFilterDugme("Stanje", filterStanje, stanja, (v) => setState(() => filterStanje = v == 'Sve' ? null : v)),
+              _iosFilterDugme("Garancija", filterGarancija, opcijeGarancije, (v) => setState(() => filterGarancija = v == 'Sve' ? null : v)),
+              _iosFilterDugme("Mehanizam", filterMehanizam, mehanizmi, (v) => setState(() => filterMehanizam = v == 'Sve' ? null : v)),
+              _iosFilterDugme("Prečnik", filterPrecnik, precnici, (v) => setState(() => filterPrecnik = v == 'Sve' ? null : v)),
+              _iosFilterDugme("Materijal kućišta", filterMaterijal, materijali, (v) => setState(() => filterMaterijal = v == 'Sve' ? null : v)),
+              _iosFilterDugme("Materijal narukvice", filterMaterijalNarukvice, materijaliNarukvice, (v) => setState(() => filterMaterijalNarukvice = v == 'Sve' ? null : v)),
+              _iosFilterDugme("Boja brojčanika", filterBojaBrojcanika, bojeBrojcanika, (v) => setState(() => filterBojaBrojcanika = v == 'Sve' ? null : v)),
+
+              StatefulBuilder(
+                builder: (context, setModalState) {
+                  return Column(
+                    children: [
+                      CheckboxListTile(
+                        title: Text("Mora da ima kutiju", style: TextStyle(color: isDark ? Colors.white : Colors.black)),
+                        value: filterKutija ?? false,
+                        onChanged: (v) { setModalState(() => filterKutija = v! ? true : null); setState(() => filterKutija = v! ? true : null); },
+                        activeColor: Colors.blue,
+                      ),
+                      CheckboxListTile(
+                        title: Text("Mora da ima papire", style: TextStyle(color: isDark ? Colors.white : Colors.black)),
+                        value: filterPapiri ?? false,
+                        onChanged: (v) { setModalState(() => filterPapiri = v! ? true : null); setState(() => filterPapiri = v! ? true : null); },
+                        activeColor: Colors.blue,
+                      ),
+                    ],
+                  );
+                }
+              ),
 
               const SizedBox(height: 30),
               SizedBox(
@@ -250,6 +295,26 @@ class _HomeScreenState extends State<HomeScreen> {
                 final satovi = snapshot.data!.where((sat) {
                   final naslov = (sat['naslov'] ?? '').toString().toLowerCase();
                   if (pretragaText.isNotEmpty && !naslov.contains(pretragaText)) return false;
+                  
+                  // VRACENI SVI FILTERI U LOGIKU:
+                  if (filterBrend != null && sat['brend'] != filterBrend) return false;
+                  if (filterModel != null && sat['model'] != filterModel) return false;
+                  if (filterStanje != null && sat['stanje'] != filterStanje) return false;
+                  if (filterMaterijal != null && sat['materijal'] != filterMaterijal) return false;
+                  if (filterMehanizam != null && sat['mehanizam'] != filterMehanizam) return false;
+                  if (filterNamena != null && sat['namena'] != filterNamena) return false;
+                  if (filterPrecnik != null && sat['precnik'] != filterPrecnik) return false;
+                  if (filterMaterijalNarukvice != null && sat['materijal_narukvice'] != filterMaterijalNarukvice) return false;
+                  if (filterBojaBrojcanika != null && sat['boja_brojcanika'] != filterBojaBrojcanika) return false;
+                  if (filterGarancija != null && sat['garancija'] != filterGarancija) return false;
+                  if (filterKutija == true && sat['originalna_kutija'] != true) return false;
+                  if (filterPapiri == true && sat['originalni_papiri'] != true) return false;
+
+                  final cena = int.tryParse(sat['cena'].toString()) ?? 0;
+                  final minC = int.tryParse(minCenaController.text) ?? 0;
+                  final maxC = int.tryParse(maxCenaController.text) ?? 9999999;
+                  if (cena < minC || cena > maxC) return false;
+
                   return true;
                 }).toList();
 
@@ -257,17 +322,19 @@ class _HomeScreenState extends State<HomeScreen> {
 
                 return GridView.builder(
                   padding: const EdgeInsets.all(12),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, crossAxisSpacing: 12, mainAxisSpacing: 12, childAspectRatio: 0.72),
+                  // OVO JE MAGIJA ZA RESPONSIVE PC: "maxCrossAxisExtent" uvek drži kartice normalne veličine!
+                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                    maxCrossAxisExtent: 220, // Na PC-u će biti 4-6 kolona, a na fonu 2
+                    crossAxisSpacing: 12, 
+                    mainAxisSpacing: 12, 
+                    childAspectRatio: 0.72
+                  ),
                   itemCount: satovi.length,
                   itemBuilder: (context, index) {
                     final sat = satovi[index];
-                    
-                    // OVO JE BILA GREŠKA! Sada je id ispravno tretiran kao tekst.
                     final oglasId = sat['id'].toString(); 
-                    
                     final slikeStr = sat['slike']?.toString() ?? "";
                     
-                    // Sigurnosno čišćenje linka slike
                     String? prvaSlika;
                     if (slikeStr.isNotEmpty && slikeStr.length > 5) {
                        prvaSlika = slikeStr.split(',')[0].replaceAll('[', '').replaceAll(']', '').replaceAll('"', '').trim();
@@ -296,7 +363,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                     child: Container(
                                       color: isDark ? Colors.grey[900] : Colors.grey[100],
                                       width: double.infinity,
-                                      // PANCIR: Pokazuje sliku, ako pukne pokazuje ikonicu
                                       child: (prvaSlika != null && prvaSlika.startsWith('http')) 
                                           ? Image.network(
                                               prvaSlika, 
