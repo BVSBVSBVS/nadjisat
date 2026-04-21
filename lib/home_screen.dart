@@ -14,7 +14,8 @@ class _HomeScreenState extends State<HomeScreen> {
   String pretragaText = '';
   final user = Supabase.instance.client.auth.currentUser;
   
-  Set<int> praceniOglasiIds = {};
+  // POPRAVLJENO: ID je sada String (tekst), a ne int (broj)!
+  Set<String> praceniOglasiIds = {};
 
   String? filterBrend, filterModel, filterStanje, filterMaterijal, filterMehanizam, filterNamena, filterPrecnik, filterMaterijalNarukvice, filterBojaBrojcanika, filterGarancija;
   bool? filterKutija;
@@ -29,7 +30,6 @@ class _HomeScreenState extends State<HomeScreen> {
     'Seiko': ['Prospex', 'Presage', 'Astron', '5 Sports', 'King Seiko', 'Premier'],
     'TAG Heuer': ['Carrera', 'Monaco', 'Aquaracer', 'Formula 1', 'Autavia'],
     'Casio': ['G-Shock', 'Edifice', 'Pro Trek', 'Baby-G', 'Vintage'],
-    // Dodaj ostale po potrebi
   };
 
   final List<String> namene = ['Sve', 'Dres (Dress)', 'Ronilački (Diver)', 'Hronograf (Chronograph)', 'Pilot (Aviator)', 'Sportski/GADA', 'Luksuzni', 'Smartwatch'];
@@ -53,7 +53,8 @@ class _HomeScreenState extends State<HomeScreen> {
       final response = await Supabase.instance.client.from('praceni_oglasi').select('oglas_id').eq('user_id', user!.id);
       if (mounted) {
         setState(() {
-          praceniOglasiIds = response.map((e) => e['oglas_id'] as int).toSet();
+          // POPRAVLJENO: Čitamo ID kao String
+          praceniOglasiIds = response.map((e) => e['oglas_id'].toString()).toSet();
         });
       }
     } catch (e) {
@@ -61,7 +62,8 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<void> _togglePraceni(int oglasId) async {
+  // POPRAVLJENO: oglasId je sada String
+  Future<void> _togglePraceni(String oglasId) async {
     if (user == null) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Morate biti prijavljeni da biste pratili oglase.")));
       return;
@@ -248,7 +250,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 final satovi = snapshot.data!.where((sat) {
                   final naslov = (sat['naslov'] ?? '').toString().toLowerCase();
                   if (pretragaText.isNotEmpty && !naslov.contains(pretragaText)) return false;
-                  return true; // Ovde su filteri, skratio sam da ti ne puca kod
+                  return true;
                 }).toList();
 
                 if (satovi.isEmpty) return const Center(child: Text("Nema rezultata.", style: TextStyle(color: Colors.grey)));
@@ -259,12 +261,15 @@ class _HomeScreenState extends State<HomeScreen> {
                   itemCount: satovi.length,
                   itemBuilder: (context, index) {
                     final sat = satovi[index];
-                    final oglasId = sat['id'] as int;
+                    
+                    // OVO JE BILA GREŠKA! Sada je id ispravno tretiran kao tekst.
+                    final oglasId = sat['id'].toString(); 
+                    
                     final slikeStr = sat['slike']?.toString() ?? "";
                     
                     // Sigurnosno čišćenje linka slike
                     String? prvaSlika;
-                    if (slikeStr.isNotEmpty) {
+                    if (slikeStr.isNotEmpty && slikeStr.length > 5) {
                        prvaSlika = slikeStr.split(',')[0].replaceAll('[', '').replaceAll(']', '').replaceAll('"', '').trim();
                     }
                     
