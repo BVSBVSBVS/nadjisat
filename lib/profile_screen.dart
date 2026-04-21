@@ -104,8 +104,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const SizedBox(height: 20),
                   const CircleAvatar(radius: 40, backgroundColor: Colors.blue, child: Icon(Icons.person, size: 40, color: Colors.white)),
                   const SizedBox(height: 15),
-                  Text(user?.email?.split('@')[0] ?? "Korisnik", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black)),
-                  Text(user?.email ?? "", style: const TextStyle(color: Colors.grey, fontSize: 14)),
+                  // UBACI OVO UMESTO NJIH:
+FutureBuilder<Map<String, dynamic>?>(
+  future: Supabase.instance.client.from('profili').select().eq('id', user!.id).maybeSingle(),
+  builder: (context, snapshot) {
+    if (snapshot.connectionState == ConnectionState.waiting) return const CupertinoActivityIndicator();
+    
+    String ime = snapshot.data?['ime'] ?? user?.email?.split('@')[0] ?? "Korisnik";
+    String grad = snapshot.data?['grad'] ?? user?.email ?? "";
+    
+    return Column(
+      children: [
+        Text(ime, style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black)),
+        const SizedBox(height: 5),
+        Text(grad, style: const TextStyle(color: Colors.grey, fontSize: 14)),
+      ],
+    );
+  }
+),
                   const SizedBox(height: 10),
                   const Row(
                     mainAxisAlignment: MainAxisAlignment.center,
