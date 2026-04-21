@@ -35,7 +35,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         actions: <CupertinoActionSheetAction>[
           CupertinoActionSheetAction(
             onPressed: () {
-              Navigator.pop(context);
+              Navigator.pop(context); // Zatvara opcije
               Navigator.push(context, MaterialPageRoute(builder: (context) => EditOglasScreen(oglas: oglas)));
             },
             child: const Text('Izmeni oglas'),
@@ -43,8 +43,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           CupertinoActionSheetAction(
             isDestructiveAction: true,
             onPressed: () {
-              Navigator.pop(context);
-              _obrisiOglas(oglas['id'].toString());
+              Navigator.pop(context); // Zatvara opcije
+              _obrisiOglas(oglas['id'].toString()); // Briše oglas
             },
             child: const Text('Obriši oglas'),
           ),
@@ -83,6 +83,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
     }
 
+    // OVO JE LINIJA KOJA JE POPRAVILA CRVENU GREŠKU:
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
@@ -93,9 +94,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           IconButton(icon: const Icon(Icons.logout), onPressed: () => Supabase.instance.client.auth.signOut())
         ],
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+     body: SingleChildScrollView(
+  child: Column(
+    crossAxisAlignment: CrossAxisAlignment.start, // OVO JE ISPRAVNO
           children: [
             Center(
               child: Column(
@@ -174,6 +175,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                     return GestureDetector(
                       onTap: () {
+                        // KADA KLIKNEŠ OGLAS, OTVARA SE NOVI EKRAN SA DETALJIMA
                         Navigator.push(context, MaterialPageRoute(builder: (context) => OglasDetaljiScreen(oglas: oglas)));
                       },
                       child: Container(
