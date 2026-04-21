@@ -253,6 +253,17 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     
+    // OVO JE MAGIJA ZA RESPONSIVAN EKRAN
+    final screenWidth = MediaQuery.of(context).size.width;
+    int brojKolona = 2; // Po defaultu za telefon je 2
+    if (screenWidth > 1200) {
+      brojKolona = 6; // Širok PC ekran -> 6 kolona
+    } else if (screenWidth > 900) {
+      brojKolona = 4; // Manji PC ekran ili tablet u položenom položaju -> 4 kolone
+    } else if (screenWidth > 600) {
+      brojKolona = 3; // Veliki telefoni/mali tableti -> 3 kolone
+    }
+    
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
@@ -296,7 +307,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   final naslov = (sat['naslov'] ?? '').toString().toLowerCase();
                   if (pretragaText.isNotEmpty && !naslov.contains(pretragaText)) return false;
                   
-                  // VRACENI SVI FILTERI U LOGIKU:
                   if (filterBrend != null && sat['brend'] != filterBrend) return false;
                   if (filterModel != null && sat['model'] != filterModel) return false;
                   if (filterStanje != null && sat['stanje'] != filterStanje) return false;
@@ -322,9 +332,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
                 return GridView.builder(
                   padding: const EdgeInsets.all(12),
-                  // OVO JE MAGIJA ZA RESPONSIVE PC: "maxCrossAxisExtent" uvek drži kartice normalne veličine!
-                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                    maxCrossAxisExtent: 220, // Na PC-u će biti 4-6 kolona, a na fonu 2
+                  // KORISTIMO ONO ŠTO SMO IZRAČUNALI GORE
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: brojKolona, 
                     crossAxisSpacing: 12, 
                     mainAxisSpacing: 12, 
                     childAspectRatio: 0.72
