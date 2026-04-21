@@ -53,9 +53,10 @@ class _MainLayoutState extends State<MainLayout> {
             label: 'Postavi oglas',
           ),
           BottomNavigationBarItem(
-            icon: Icon(CupertinoIcons.heart),
-            label: 'Pratim',
-          ),
+  icon: const Icon(CupertinoIcons.heart),
+  activeIcon: const Icon(CupertinoIcons.heart_fill, color: Colors.red), // OVO DAJE CRVENU BOJU KAD SE KLIKNE
+  label: 'Pratim',
+),
           BottomNavigationBarItem(
             icon: Icon(CupertinoIcons.person),
             label: 'Moj Profil',
