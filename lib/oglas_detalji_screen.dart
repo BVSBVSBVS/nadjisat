@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class OglasDetaljiScreen extends StatefulWidget {
   final Map<String, dynamic> oglas;
@@ -78,7 +79,7 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
                   Text(oglas['naslov'] ?? "Sat", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black)),
                   const SizedBox(height: 8),
                   Text(
-                    oglas['cena_dogovor'] == true ? "Cijena po dogovoru" : "${oglas['cena']} ${oglas['valuta'] ?? '€'}", 
+                    oglas['cena_dogovor'] == true ? "Cena po dogovoru" : "${oglas['cena']} ${oglas['valuta'] ?? '€'}", 
                     style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: Colors.blue)
                   ),
                   const SizedBox(height: 5),
@@ -90,6 +91,84 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
                     ],
                   ),
                   
+                  const SizedBox(height: 25),
+                  
+                  // --- KARTICA PRODAVCA ---
+                  const Text("INFORMACIJE O PRODAVCU", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)),
+                  const SizedBox(height: 10),
+                  FutureBuilder<Map<String, dynamic>?>(
+                    future: Supabase.instance.client.from('profili').select().eq('id', oglas['user_id']).maybeSingle(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CupertinoActivityIndicator());
+                      }
+                      
+                      final prodavac = snapshot.data ?? {};
+                      final ime = prodavac['ime'] ?? prodavac['username'] ?? "Korisnik";
+                      final telefon = prodavac['telefon'] ?? "Nije unet broj";
+                      final ocena = prodavac['ocena']?.toString() ?? "Nema ocena"; 
+
+                      return Container(
+                        padding: const EdgeInsets.all(15),
+                        decoration: BoxDecoration(
+                          color: isDark ? Colors.grey[900] : Colors.grey[100],
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                CircleAvatar(
+                                  radius: 25,
+                                  backgroundColor: Colors.blueAccent.withOpacity(0.2),
+                                  child: const Icon(CupertinoIcons.person_fill, color: Colors.blueAccent),
+                                ),
+                                const SizedBox(width: 15),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(ime, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black)),
+                                      const SizedBox(height: 3),
+                                      Row(
+                                        children: [
+                                          const Icon(Icons.star, color: Colors.amber, size: 16),
+                                          const SizedBox(width: 4),
+                                          Text(ocena, style: TextStyle(fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black)),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 15),
+                            Row(
+                              children: [
+                                const Icon(CupertinoIcons.phone_fill, color: Colors.green, size: 18),
+                                const SizedBox(width: 10),
+                                Text(telefon, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: isDark ? Colors.white : Colors.black)),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            SizedBox(
+                              width: double.infinity,
+                              child: CupertinoButton(
+                                padding: const EdgeInsets.symmetric(vertical: 10),
+                                color: Colors.transparent,
+                                child: const Text("Vidi ceo profil", style: TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold)),
+                                onPressed: () {
+                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Ovo će otvoriti profil prodavca!")));
+                                },
+                              ),
+                            )
+                          ],
+                        ),
+                      );
+                    }
+                  ),
+
                   const SizedBox(height: 25),
                   const Text("Detalji", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 10),
@@ -110,6 +189,7 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
                         const Divider(height: 20),
                         _buildSpecRed("Mehanizam", oglas['mehanizam'], isDark),
                         _buildSpecRed("Prečnik", oglas['precnik'], isDark),
+                        _buildSpecRed("Lug-to-Lug", oglas['lug_to_lug'], isDark),
                         _buildSpecRed("Materijal", oglas['materijal'], isDark),
                         _buildSpecRed("Narukvica", oglas['materijal_narukvice'], isDark),
                         _buildSpecRed("Cifer", oglas['boja_brojcanika'], isDark),
@@ -129,7 +209,7 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
                     Container(
                       padding: const EdgeInsets.all(12), margin: const EdgeInsets.only(bottom: 10),
                       decoration: BoxDecoration(color: Colors.orange.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
-                      child: const Row(children: [Icon(CupertinoIcons.arrow_right_arrow_left, color: Colors.orange), SizedBox(width: 10), Text("Moguća zamjena", style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold))]),
+                      child: const Row(children: [Icon(CupertinoIcons.arrow_right_arrow_left, color: Colors.orange), SizedBox(width: 10), Text("Moguća zamena", style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold))]),
                     ),
                   if (oglas['servisna_istorija'] != null && oglas['servisna_istorija'].toString().isNotEmpty)
                     Container(

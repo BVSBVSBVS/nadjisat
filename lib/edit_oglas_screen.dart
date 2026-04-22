@@ -4,7 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 
 class EditOglasScreen extends StatefulWidget {
-  final Map<String, dynamic> oglas; // Prima podatke o oglasu
+  final Map<String, dynamic> oglas;
   const EditOglasScreen({super.key, required this.oglas});
 
   @override
@@ -14,7 +14,7 @@ class EditOglasScreen extends StatefulWidget {
 class _EditOglasScreenState extends State<EditOglasScreen> {
   final _formKey = GlobalKey<FormState>();
   
-  String? izabranBrend, izabranModel, stanje, godina, precnik, materijal, staklo, mehanizam, vodootpornost, kutijaPapiri;
+  String? izabranBrend, izabranModel, stanje, godina, precnik, lugToLug, materijal, staklo, mehanizam, vodootpornost, kutijaPapiri;
   final cenaController = TextEditingController();
   final opisController = TextEditingController();
   bool cenaPoDogovoru = false;
@@ -24,45 +24,51 @@ class _EditOglasScreenState extends State<EditOglasScreen> {
   final ImagePicker _picker = ImagePicker();
   bool isUploading = false;
 
-  // ONA PROŠIRENA BAZA DA BI MOGAO DA MENJAŠ U BILO ŠTA
   final Map<String, List<String>> brendoviIModeli = {
-    'Rolex': ['Submariner', 'Daytona', 'Datejust', 'GMT-Master II', 'Oyster Perpetual', 'Sea-Dweller', 'Yacht-Master', 'Sky-Dweller', 'Explorer', 'Milgauss'],
-    'Omega': ['Speedmaster', 'Seamaster', 'Aqua Terra', 'Planet Ocean', 'De Ville', 'Constellation', 'Railmaster'],
-    'Patek Philippe': ['Nautilus', 'Aquanaut', 'Calatrava', 'Complications', 'Grand Complications', 'Gondolo', 'Ellipse'],
-    'Audemars Piguet': ['Royal Oak', 'Royal Oak Offshore', 'Code 11.59', 'Millenary', 'Jules Audemars'],
+    'A. Lange & Söhne': ['1815', 'Datograph', 'Grand Lange 1', 'Lange 1', 'Saxonia', 'Zeitwerk', 'Richard Lange'],
+    'Audemars Piguet': ['Royal Oak', 'Royal Oak Offshore', 'Code 11.59', 'Jules Audemars', 'Millenary'],
+    'Baume & Mercier': ['Clifton', 'Classima', 'Riviera', 'Hampton', 'Capeland', 'Baumatic'],
+    'Blancpain': ['Fifty Fathoms', 'Villeret', 'Bathyscaphe', 'Air Command', 'Léman'],
+    'Breguet': ['Classique', 'Marine', 'Type XX', 'Reine de Naples', 'Tradition', 'Heritage'],
+    'Breitling': ['Navitimer', 'Chronomat', 'Superocean', 'Avenger', 'Premier', 'Top Time', 'Endurance Pro'],
+    'Bulgari': ['Octo Finissimo', 'Octo Roma', 'Serpenti', 'B.zero1', 'Aluminium'],
+    'Cartier': ['Tank', 'Santos', 'Ballon Bleu', 'Pasha', 'Drive de Cartier', 'Panthère'],
+    'Casio': ['G-Shock', 'Edifice', 'Pro Trek', 'Baby-G', 'Vintage', 'Oceanus', 'Databank'],
+    'Citizen': ['Promaster', 'Eco-Drive One', 'The Citizen', 'Attesa', 'Series 8', 'Satellite Wave'],
+    'Grand Seiko': ['Heritage', 'Elegance', 'Sport', 'Evolution 9', 'Masterpiece'],
+    'Hublot': ['Big Bang', 'Classic Fusion', 'Spirit of Big Bang', 'MP Collection', 'King Power'],
+    'IWC Schaffhausen': ['Portugieser', 'Big Pilot', 'Pilot\'s Watch', 'Ingenieur', 'Portofino', 'Da Vinci'],
+    'Jaeger-LeCoultre': ['Reverso', 'Master Control', 'Polaris', 'Atmos', 'Rendez-Vous', 'Geophysic'],
+    'Longines': ['HydroConquest', 'Spirit', 'Master Collection', 'Heritage', 'Conquest', 'DolceVita', 'Legend Diver'],
+    'Omega': ['Speedmaster', 'Seamaster', 'Constellation', 'De Ville', 'Aqua Terra'],
+    'Oris': ['Aquis', 'Big Crown', 'Divers Sixty-Five', 'Artelier', 'ProPilot'],
+    'Panerai': ['Luminor', 'Radiomir', 'Submersible', 'Due'],
+    'Patek Philippe': ['Nautilus', 'Calatrava', 'Aquanaut', 'Grand Complications', 'Annual Calendar'],
+    'Rolex': ['Submariner', 'Daytona', 'Datejust', 'GMT-Master II', 'Explorer', 'Day-Date', 'Sea-Dweller'],
+    'Seiko': ['Prospex', 'Presage', 'Astron', '5 Sports', 'King Seiko', 'Premier'],
+    'TAG Heuer': ['Carrera', 'Monaco', 'Aquaracer', 'Formula 1', 'Autavia', 'Connected'],
+    'Tissot': ['PRX', 'Seastar', 'Le Locle', 'Gentleman', 'T-Touch', 'Chemin des Tourelles'],
+    'Tudor': ['Black Bay', 'Pelagos', 'Ranger', 'Royal', '1926'],
     'Vacheron Constantin': ['Overseas', 'Patrimony', 'Traditionnelle', 'Fiftysix', 'Historiques'],
-    'Richard Mille': ['RM 011', 'RM 035', 'RM 055', 'RM 067', 'RM 11-03'],
-    'Cartier': ['Santos', 'Tank', 'Ballon Bleu', 'Pasha', 'Panthere', 'Drive de Cartier'],
-    'IWC': ['Portugieser', 'Pilot', 'Portofino', 'Aquatimer', 'Ingenieur', 'Da Vinci'],
-    'Breitling': ['Navitimer', 'Superocean', 'Chronomat', 'Avenger', 'Endurance Pro', 'Premier'],
-    'Tudor': ['Black Bay', 'Pelagos', 'Ranger', '1926', 'Royal'],
-    'Panerai': ['Luminor', 'Radiomir', 'Submersible', 'Luminor Due'],
-    'Hublot': ['Big Bang', 'Classic Fusion', 'Spirit of Big Bang'],
-    'Zenith': ['Defy', 'Chronomaster', 'Elite', 'Pilot'],
-    'TAG Heuer': ['Carrera', 'Monaco', 'Aquaracer', 'Formula 1', 'Autavia'],
-    'Seiko': ['Prospex', 'Presage', '5 Sports', 'Astron', 'King Seiko'],
-    'Grand Seiko': ['Heritage', 'Elegance', 'Sport', 'Evolution 9'],
-    'Tissot': ['PRX', 'Seastar', 'Le Locle', 'Gentleman', 'Supersport'],
-    'Longines': ['HydroConquest', 'Master Collection', 'Spirit', 'Heritage', 'DolceVita'],
-    'Casio': ['G-Shock', 'Edifice', 'Pro Trek', 'Vintage'],
+    'Zenith': ['Chronomaster', 'Defy', 'Elite', 'Pilot'],
   };
 
-  final List<String> stanja = ['Novo (Nenošeno)', 'Odlično', 'Vrlo dobro', 'Dobro', 'Za delove'];
-  final List<String> materijali = ['Čelik', 'Zlato', 'Titanijum', 'Keramika', 'Platina', 'Karbon'];
+  final List<String> godine = List.generate(127, (index) => (2026 - index).toString());
+  final List<String> precnici = List.generate(41, (index) => "${20 + index}mm");
+  final List<String> lugToLugLista = List.generate(41, (index) => "${30 + index}mm");
+
+  final List<String> stanja = ['1. Novo sa folijama', '2. Kao novo', '3. Odlično', '4. Dobro', '5. Vidljivi tragovi korišćenja'];
+  final List<String> materijali = ['Čelik', 'Zlato (18k)', 'Titanijum', 'Platina', 'Keramika', 'Bronza', 'Guma/Plastika'];
   final List<String> stakla = ['Safirno', 'Mineralno', 'Akrilno (Plexi)'];
-  final List<String> mehanizmi = ['Automatik', 'Kvarcni', 'Ručno navijanje', 'Spring Drive'];
+  final List<String> mehanizmi = ['Automatik', 'Manuelni', 'Kvarcni', 'Spring Drive', 'Solar', 'Kinetic'];
   final List<String> vodootpornosti = ['Nije vodootporan', '30m (3 ATM)', '50m (5 ATM)', '100m (10 ATM)', '200m+ (Diver)'];
   final List<String> opcijeKutija = ['Full Set (Kutija i papiri)', 'Samo kutija', 'Samo papiri', 'Samo sat'];
-  final List<String> godine = List.generate(75, (index) => (2024 - index).toString());
-  final List<String> precnici = List.generate(33, (index) => "${28 + index} mm");
 
   @override
   void initState() {
     super.initState();
-    // POPUNJAVANJE PODATAKA IZ BAZE KAD SE EKRAN OTVORI
     final oglas = widget.oglas;
     
-    // Provere da li brend postoji u listi (da ne puca drop down)
     if (brendoviIModeli.containsKey(oglas['brend'])) {
       izabranBrend = oglas['brend'];
       if (brendoviIModeli[izabranBrend]!.contains(oglas['model'])) {
@@ -76,6 +82,7 @@ class _EditOglasScreenState extends State<EditOglasScreen> {
     if (stanja.contains(oglas['stanje'])) stanje = oglas['stanje'];
     if (godine.contains(oglas['godina']?.toString())) godina = oglas['godina']?.toString();
     if (precnici.contains(oglas['precnik'])) precnik = oglas['precnik'];
+    if (lugToLugLista.contains(oglas['lug_to_lug'])) lugToLug = oglas['lug_to_lug'];
     if (materijali.contains(oglas['materijal'])) materijal = oglas['materijal'];
     if (stakla.contains(oglas['staklo'])) staklo = oglas['staklo'];
     if (mehanizmi.contains(oglas['mehanizam'])) mehanizam = oglas['mehanizam'];
@@ -90,7 +97,7 @@ class _EditOglasScreenState extends State<EditOglasScreen> {
     final List<XFile> slike = await _picker.pickMultiImage();
     if (slike.isNotEmpty) {
       setState(() {
-        noveSlike = slike; // Zamenjujemo stare slike novim
+        noveSlike = slike;
         if (noveSlike.length > 16) {
           noveSlike = noveSlike.sublist(0, 16);
           if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Max 16 slika.")));
@@ -110,7 +117,6 @@ class _EditOglasScreenState extends State<EditOglasScreen> {
     try {
       String konacneSlike = stareSlikeUrl;
 
-      // Ako je dodao nove slike, uploaduj ih i pregazi stare
       if (noveSlike.isNotEmpty) {
         List<String> slikeUrls = [];
         for (var slika in noveSlike) {
@@ -127,7 +133,6 @@ class _EditOglasScreenState extends State<EditOglasScreen> {
         konacneSlike = slikeUrls.join(',');
       }
 
-      // KOMANDA UPDATE UMESTO INSERT
       await Supabase.instance.client.from('satovi').update({
         'naslov': '$izabranBrend $izabranModel',
         'brend': izabranBrend,
@@ -136,6 +141,7 @@ class _EditOglasScreenState extends State<EditOglasScreen> {
         'cena_dogovor': cenaPoDogovoru,
         'godina': godina,
         'precnik': precnik,
+        'lug_to_lug': lugToLug,
         'stanje': stanje,
         'materijal': materijal,
         'staklo': staklo,
@@ -144,7 +150,7 @@ class _EditOglasScreenState extends State<EditOglasScreen> {
         'kutija_papiri': kutijaPapiri,
         'opis': opisController.text.trim(),
         'slike': konacneSlike,
-      }).eq('id', widget.oglas['id']); // <- KLJUČNO: Nalazi tačan oglas
+      }).eq('id', widget.oglas['id']); 
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Oglas uspešno izmenjen!")));
@@ -162,12 +168,12 @@ class _EditOglasScreenState extends State<EditOglasScreen> {
       context: context,
       builder: (_) => Container(
         height: 250,
-        color: Colors.white,
+        color: Theme.of(context).scaffoldBackgroundColor,
         child: Column(
           children: [
             Container(
               height: 50,
-              color: Colors.grey.shade100,
+              color: Theme.of(context).cardColor,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
@@ -178,10 +184,9 @@ class _EditOglasScreenState extends State<EditOglasScreen> {
             Expanded(
               child: CupertinoPicker(
                 itemExtent: 32.0,
-                // Pronadji trenutni index da bi točkić počeo od njega
                 scrollController: FixedExtentScrollController(initialItem: 0),
                 onSelectedItemChanged: (index) => onOdabrano(opcije[index]),
-                children: opcije.map((o) => Center(child: Text(o, style: const TextStyle(fontSize: 18)))).toList(),
+                children: opcije.map((o) => Center(child: Text(o, style: TextStyle(fontSize: 18, color: Theme.of(context).textTheme.bodyLarge?.color)))).toList(),
               ),
             ),
           ],
@@ -191,16 +196,17 @@ class _EditOglasScreenState extends State<EditOglasScreen> {
   }
 
   Widget _iosPoljeZaBiranje(String label, String? trenutnaVrednost, List<String> opcije, Function(String) onOdabrano) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
       onTap: opcije.isEmpty ? null : () => _prikaziIOSPicker(label, opcije, onOdabrano),
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.grey.shade300)),
+        decoration: BoxDecoration(color: isDark ? Colors.grey[800] : Colors.white, borderRadius: BorderRadius.circular(10), border: Border.all(color: isDark ? Colors.grey[700]! : Colors.grey.shade300)),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(trenutnaVrednost ?? label, style: TextStyle(fontSize: 16, color: trenutnaVrednost == null ? Colors.grey : Colors.black)),
+            Text(trenutnaVrednost ?? label, style: TextStyle(fontSize: 16, color: trenutnaVrednost == null ? Colors.grey : (isDark ? Colors.white : Colors.black))),
             const Icon(CupertinoIcons.chevron_down, color: Colors.grey, size: 18),
           ],
         ),
@@ -210,13 +216,11 @@ class _EditOglasScreenState extends State<EditOglasScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F2F7), 
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor, 
       appBar: AppBar(
-        title: const Text("Izmeni oglas", style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600)),
-        backgroundColor: Colors.white,
-        elevation: 0.5,
-        iconTheme: const IconThemeData(color: Colors.black),
+        title: const Text("Izmeni oglas", style: TextStyle(fontWeight: FontWeight.w600)),
       ),
       body: isUploading ? const Center(child: CupertinoActivityIndicator(radius: 20)) : Form(
         key: _formKey,
@@ -227,7 +231,7 @@ class _EditOglasScreenState extends State<EditOglasScreen> {
               onTap: _izaberiSlike,
               child: Container(
                 height: 120,
-                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey.shade300)),
+                decoration: BoxDecoration(color: isDark ? Colors.grey[800] : Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: isDark ? Colors.grey[700]! : Colors.grey.shade300)),
                 child: const Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -242,7 +246,7 @@ class _EditOglasScreenState extends State<EditOglasScreen> {
             
             Container(
               padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+              decoration: BoxDecoration(color: isDark ? Colors.grey[900] : Colors.grey[100], borderRadius: BorderRadius.circular(12)),
               child: Column(
                 children: [
                   _iosPoljeZaBiranje("Brend", izabranBrend, brendoviIModeli.keys.toList(), (v) => setState(() { izabranBrend = v; izabranModel = null; })),
@@ -250,7 +254,7 @@ class _EditOglasScreenState extends State<EditOglasScreen> {
                   
                   Row(
                     children: [
-                      const Text("Kontakt / Po dogovoru", style: TextStyle(fontSize: 16)),
+                      Text("Kontakt / Po dogovoru", style: TextStyle(fontSize: 16, color: isDark ? Colors.white : Colors.black)),
                       const Spacer(),
                       CupertinoSwitch(
                         value: cenaPoDogovoru,
@@ -263,11 +267,12 @@ class _EditOglasScreenState extends State<EditOglasScreen> {
                     Padding(
                       padding: const EdgeInsets.only(top: 12),
                       child: CupertinoTextField(
+                        style: TextStyle(color: isDark ? Colors.white : Colors.black),
                         controller: cenaController,
                         keyboardType: const TextInputType.numberWithOptions(decimal: false, signed: false), 
                         placeholder: "Cena (€)",
                         padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.grey.shade300)),
+                        decoration: BoxDecoration(color: isDark ? Colors.grey[800] : Colors.white, borderRadius: BorderRadius.circular(10), border: Border.all(color: isDark ? Colors.grey[700]! : Colors.grey.shade300)),
                       ),
                     ),
                 ],
@@ -277,15 +282,16 @@ class _EditOglasScreenState extends State<EditOglasScreen> {
             
             Container(
               padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+              decoration: BoxDecoration(color: isDark ? Colors.grey[900] : Colors.grey[100], borderRadius: BorderRadius.circular(12)),
               child: Column(
                 children: [
                   _iosPoljeZaBiranje("Stanje", stanje, stanja, (v) => setState(() => stanje = v)),
+                  _iosPoljeZaBiranje("Godina", godina, godine, (v) => setState(() => godina = v)),
                   Row(
                     children: [
-                      Expanded(child: _iosPoljeZaBiranje("Godina", godina, godine, (v) => setState(() => godina = v))),
-                      const SizedBox(width: 10),
                       Expanded(child: _iosPoljeZaBiranje("Prečnik", precnik, precnici, (v) => setState(() => precnik = v))),
+                      const SizedBox(width: 10),
+                      Expanded(child: _iosPoljeZaBiranje("Lug-to-Lug", lugToLug, lugToLugLista, (v) => setState(() => lugToLug = v))),
                     ],
                   ),
                   _iosPoljeZaBiranje("Materijal", materijal, materijali, (v) => setState(() => materijal = v)),
@@ -299,11 +305,12 @@ class _EditOglasScreenState extends State<EditOglasScreen> {
             const SizedBox(height: 20),
             
             CupertinoTextField(
+              style: TextStyle(color: isDark ? Colors.white : Colors.black),
               controller: opisController,
               maxLines: 4,
               placeholder: "Opis",
               padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey.shade300)),
+              decoration: BoxDecoration(color: isDark ? Colors.grey[800] : Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: isDark ? Colors.grey[700]! : Colors.grey.shade300)),
             ),
             const SizedBox(height: 30),
             

@@ -18,7 +18,7 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
   final refBrojController = TextEditingController();
 
   // --- 2. TEHNIČKE SPECIFIKACIJE ---
-  String? namena, mehanizam, precnik, materijalKucista, materijalNarukvice, bojaBrojcanika;
+  String? namena, mehanizam, precnik, lugToLug, materijalKucista, materijalNarukvice, bojaBrojcanika;
 
   // --- 3. STANJE I OPREMA ---
   String? stanjeSata, garancija;
@@ -36,7 +36,7 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
   final lokacijaController = TextEditingController();
   final opisController = TextEditingController();
 
-  // --- BAZE PODATAKA ZA MENIJE ---
+  // --- BAZE PODATAKA ---
   final Map<String, List<String>> brendoviIModeli = {
     'Svi': [],
     'A. Lange & Söhne': ['1815', 'Datograph', 'Grand Lange 1', 'Lange 1', 'Saxonia', 'Zeitwerk', 'Richard Lange'],
@@ -67,10 +67,12 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
     'Zenith': ['Chronomaster', 'Defy', 'Elite', 'Pilot'],
   };
 
-  final List<String> godine = List.generate(75, (index) => (2024 - index).toString());
+  final List<String> godine = List.generate(127, (index) => (2026 - index).toString()); // Od 2026 do 1900
+  final List<String> precnici = List.generate(41, (index) => "${20 + index}mm"); // Od 20mm do 60mm
+  final List<String> lugToLugLista = List.generate(41, (index) => "${30 + index}mm"); // Od 30mm do 70mm
+  
   final List<String> namene = ['Dres (Dress)', 'Ronilački (Diver)', 'Hronograf (Chronograph)', 'Pilot (Aviator)', 'Sportski/GADA', 'Luksuzni', 'Smartwatch'];
   final List<String> mehanizmi = ['Automatik', 'Manuelni', 'Kvarcni', 'Spring Drive', 'Solar', 'Kinetic'];
-  final List<String> precnici = ['Do 34mm', '36mm', '38mm', '40mm', '42mm', '44mm', '46mm+'];
   final List<String> materijali = ['Čelik', 'Zlato (18k)', 'Titanijum', 'Platina', 'Keramika', 'Bronza', 'Guma/Plastika'];
   final List<String> materijaliNarukvice = ['Čelik', 'Koža', 'Guma', 'Tekstil/Nato', 'Titanijum', 'Zlato'];
   final List<String> bojeBrojcanika = ['Crna', 'Plava', 'Bela/Srebrna', 'Zelena', 'Siva', 'Zlatna', 'Druga'];
@@ -83,7 +85,6 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
     if (slike.isNotEmpty) {
       setState(() {
         izabraneSlike.addAll(slike);
-        // OGRANIČENO NA 6 SLIKA KAO ŠTO SI TRAŽIO
         if (izabraneSlike.length > 6) {
           izabraneSlike = izabraneSlike.sublist(0, 6);
           if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Možete dodati maksimalno 6 slika.")));
@@ -120,7 +121,6 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
         }
       }
 
-      // KONAČAN INSERT U BAZU (Strogo se pazi da imena kolona odgovaraju onima u bazi)
       await Supabase.instance.client.from('satovi').insert({
         'user_id': user?.id,
         'user_email': user?.email,
@@ -129,14 +129,15 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
         'model': izabranModel,
         'ref_broj': refBrojController.text.trim(),
         'godina': godina,
-        'namena': namena, // BAZA OČEKUJE OVO IME!
+        'namena': namena,
         'mehanizam': mehanizam,
         'precnik': precnik,
+        'lug_to_lug': lugToLug,
         'materijal': materijalKucista,
         'materijal_narukvice': materijalNarukvice,
         'boja_brojcanika': bojaBrojcanika,
         'stanje': stanjeSata,
-        'garancija': garancija, // NOVA KOLONA
+        'garancija': garancija, 
         'originalna_kutija': imaKutiju,
         'originalni_papiri': imaPapire,
         'servisna_istorija': servisController.text.trim(),
@@ -150,7 +151,7 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
       });
 
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Oglas uspješno postavljen!")));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Oglas uspešno postavljen!")));
       Navigator.pop(context); 
 
     } catch (e) {
@@ -233,9 +234,15 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
                     decoration: BoxDecoration(color: isDark ? Colors.grey[900] : Colors.grey[100], borderRadius: BorderRadius.circular(12)),
                     child: Column(
                       children: [
-                        _buildDropdown("Kategorija / Namjena", namena, namene, (v) => setState(() => namena = v)),
+                        _buildDropdown("Kategorija / Namena", namena, namene, (v) => setState(() => namena = v)),
                         _buildDropdown("Mehanizam", mehanizam, mehanizmi, (v) => setState(() => mehanizam = v)),
-                        _buildDropdown("Prečnik kućišta", precnik, precnici, (v) => setState(() => precnik = v)),
+                        Row(
+                          children: [
+                            Expanded(child: _buildDropdown("Prečnik", precnik, precnici, (v) => setState(() => precnik = v))),
+                            const SizedBox(width: 10),
+                            Expanded(child: _buildDropdown("Lug-to-Lug", lugToLug, lugToLugLista, (v) => setState(() => lugToLug = v))),
+                          ],
+                        ),
                         _buildDropdown("Materijal kućišta", materijalKucista, materijali, (v) => setState(() => materijalKucista = v)),
                         _buildDropdown("Materijal narukvice", materijalNarukvice, materijaliNarukvice, (v) => setState(() => materijalNarukvice = v)),
                         _buildDropdown("Boja brojčanika", bojaBrojcanika, bojeBrojcanika, (v) => setState(() => bojaBrojcanika = v)),
@@ -294,7 +301,7 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
                     ),
                   ),
 
-                  _buildSectionHeader("4. Cijena i lokacija", CupertinoIcons.money_euro_circle_fill),
+                  _buildSectionHeader("4. Cena i lokacija", CupertinoIcons.money_euro_circle_fill),
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(color: isDark ? Colors.grey[900] : Colors.grey[100], borderRadius: BorderRadius.circular(12)),
@@ -306,7 +313,7 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
                               flex: 2,
                               child: CupertinoTextField(
                                 style: TextStyle(color: isDark ? Colors.white : Colors.black),
-                                controller: cenaController, placeholder: "Cijena *", keyboardType: TextInputType.number,
+                                controller: cenaController, placeholder: "Cena *", keyboardType: TextInputType.number,
                                 padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: isDark ? Colors.grey[800] : Colors.white, borderRadius: BorderRadius.circular(10)),
                               ),
                             ),
@@ -318,7 +325,7 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
                           ],
                         ),
                         CheckboxListTile(
-                          title: Text("Moguća zamjena", style: TextStyle(color: isDark ? Colors.white : Colors.black)),
+                          title: Text("Moguća zamena", style: TextStyle(color: isDark ? Colors.white : Colors.black)),
                           value: zamena,
                           onChanged: (v) => setState(() => zamena = v!),
                           activeColor: Colors.blue,
