@@ -10,8 +10,8 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  bool isLogin = true; // Da li smo na ekranu za Prijavu ili Registraciju
-  bool isFirma = false; // Checkbox za pravna lica
+  bool isLogin = true; 
+  bool isFirma = false; 
 
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
@@ -37,7 +37,6 @@ class _LoginScreenState extends State<LoginScreen> {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Broj telefona je obavezan za registraciju!")));
           return;
         }
-        // Šaljemo i dodatne podatke (telefon i status firme)
         await Supabase.instance.client.auth.signUp(
           email: email,
           password: password,
@@ -50,13 +49,23 @@ class _LoginScreenState extends State<LoginScreen> {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Uspešna registracija!")));
         }
       }
+
+      // OVO JE ONA MAGIČNA LINIJA - SADA VAŽI I ZA LOGIN I ZA REGISTRACIJU!
+      // Čim prođe prijava/registracija, ubija ovaj ekran i forsira osvežavanje cele aplikacije!
+      if (mounted) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const MainLayout()), 
+          (route) => false, 
+        );
+      }
+
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Greška: $e")));
     }
   }
 
   void _ulogujKaoGosta() {
-    // Propuštamo korisnika bez naloga direktno u aplikaciju!
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (context) => const MainLayout()),
     );
@@ -65,7 +74,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F4F6), // Premium siva
+      backgroundColor: const Color(0xFFF3F4F6), 
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -73,52 +82,51 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // PREMIUM LOGO
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: Colors.black,
                     borderRadius: BorderRadius.circular(20),
-                    // Umesto withAlpha(0.3) stavi ovo:
-boxShadow: [BoxShadow(color: Colors.orange.withAlpha(76), blurRadius: 20, offset: const Offset(0, 10))],
+                    boxShadow: [BoxShadow(color: Colors.orange.withOpacity(0.3), blurRadius: 20, offset: const Offset(0, 10))],
                   ),
                   child: const Icon(Icons.watch, size: 60, color: Colors.orange),
                 ),
                 const SizedBox(height: 16),
-                const Text("NadjiSat", style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
+                const Text("NadjiSat", style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: 1.5, color: Colors.black)),
                 const SizedBox(height: 8),
                 Text(isLogin ? "Prijavite se na svoj nalog" : "Kreirajte novi nalog", style: const TextStyle(color: Colors.grey, fontSize: 16)),
                 const SizedBox(height: 40),
 
-                // FORMA ZA UNOS
                 Container(
                   padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(25), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 15)]),
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(25), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 15)]),
                   child: Column(
                     children: [
                       TextField(
                         controller: emailController,
+                        style: const TextStyle(color: Colors.black),
                         keyboardType: TextInputType.emailAddress,
                         decoration: InputDecoration(labelText: "Email", prefixIcon: const Icon(Icons.email_outlined), border: OutlineInputBorder(borderRadius: BorderRadius.circular(15))),
                       ),
                       const SizedBox(height: 16),
                       TextField(
                         controller: passwordController,
+                        style: const TextStyle(color: Colors.black),
                         obscureText: true,
                         decoration: InputDecoration(labelText: "Lozinka", prefixIcon: const Icon(Icons.lock_outline), border: OutlineInputBorder(borderRadius: BorderRadius.circular(15))),
                       ),
                       
-                      // DODATNA POLJA SAMO ZA REGISTRACIJU
                       if (!isLogin) ...[
                         const SizedBox(height: 16),
                         TextField(
                           controller: phoneController,
+                          style: const TextStyle(color: Colors.black),
                           keyboardType: TextInputType.phone,
                           decoration: InputDecoration(labelText: "Broj telefona (Obavezno)", prefixIcon: const Icon(Icons.phone_outlined), border: OutlineInputBorder(borderRadius: BorderRadius.circular(15))),
                         ),
                         const SizedBox(height: 10),
                         CheckboxListTile(
-                          title: const Text("Pravno lice (Firma)", style: TextStyle(fontWeight: FontWeight.bold)),
+                          title: const Text("Pravno lice (Firma)", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
                           activeColor: Colors.orange[700],
                           value: isFirma,
                           onChanged: (val) => setState(() => isFirma = val ?? false),
@@ -143,7 +151,6 @@ boxShadow: [BoxShadow(color: Colors.orange.withAlpha(76), blurRadius: 20, offset
                 
                 const SizedBox(height: 20),
                 
-                // PREBACIVANJE LOGIN / REGISTRACIJA
                 TextButton(
                   onPressed: () => setState(() { isLogin = !isLogin; }),
                   child: Text(isLogin ? "Nemate nalog? Napravite ga ovde" : "Već imate nalog? Prijavite se", style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.bold)),
@@ -151,7 +158,6 @@ boxShadow: [BoxShadow(color: Colors.orange.withAlpha(76), blurRadius: 20, offset
                 
                 const SizedBox(height: 10),
 
-                // GUEST MODE (SAMO RAZGLEDAM)
                 TextButton.icon(
                   onPressed: _ulogujKaoGosta,
                   icon: const Icon(Icons.travel_explore, color: Colors.grey),

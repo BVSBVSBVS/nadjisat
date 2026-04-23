@@ -24,6 +24,7 @@ class _EditOglasScreenState extends State<EditOglasScreen> {
   final ImagePicker _picker = ImagePicker();
   bool isUploading = false;
 
+  // Ista baza, abecedni red
   final Map<String, List<String>> brendoviIModeli = {
     'A. Lange & Söhne': ['1815', 'Datograph', 'Grand Lange 1', 'Lange 1', 'Saxonia', 'Zeitwerk', 'Richard Lange'],
     'Audemars Piguet': ['Royal Oak', 'Royal Oak Offshore', 'Code 11.59', 'Jules Audemars', 'Millenary'],
@@ -49,21 +50,22 @@ class _EditOglasScreenState extends State<EditOglasScreen> {
     'Fortis': ['Flieger', 'Marinemaster', 'Cosmonaut', 'Aeromaster', 'Stratoliner'],
     'Franck Muller': ['Vanguard', 'Cintrée Curvex', 'Casablanca', 'Master Square', 'Long Island'],
     'Girard-Perregaux': ['Laureato', 'Bridges', 'Vintage 1945', '1966', 'Free Bridge'],
-    'Glashütte Original': ['PanomaticLunar', 'Senator', 'SeaQ', 'Sixties', 'Seventies'],
-    'Grand Seiko': ['Heritage', 'Elegance', 'Sport', 'Evolution 9', 'Masterpiece'],
-    'Hamilton': ['Khaki Field', 'Khaki Aviation', 'Khaki Navy', 'Ventura', 'Jazzmaster', 'American Classic'],
-    'Hanhart': ['417 ES', 'Pioneer', 'Primus', 'Stopwatches'],
-    'Hublot': ['Big Bang', 'Classic Fusion', 'Spirit of Big Bang', 'MP Collection', 'King Power'],
+    'Glashütte Original': ['PanoMaticLunar', 'PanoReserve', 'Senator', 'SeaQ', 'Seventies Chronograph'],
+    'Gorilla': ['Fastback', 'Fastback GT', 'Outlaw Drift', 'Thunderbolt'],
+    'Grand Seiko': ['Heritage', 'Evolution 9', 'Elegance', 'Sport', 'GMT', 'Diver', 'High-Beat'],
+    'H. Moser & Cie.': ['Endeavour', 'Pioneer', 'Heritage', 'Streamliner', 'Venturer'],
+    'Hamilton': ['Khaki Field', 'Khaki Aviation', 'Khaki Navy', 'Jazzmaster', 'American Classic', 'Ventura'],
+    'Hanhart': ['417 ES', 'Pioneer', 'Primus', 'Preventor', 'MonoControl'],
     'IWC Schaffhausen': ['Portugieser', 'Big Pilot', 'Pilot\'s Watch', 'Ingenieur', 'Portofino', 'Da Vinci'],
     'Jaeger-LeCoultre': ['Reverso', 'Master Control', 'Polaris', 'Atmos', 'Rendez-Vous', 'Geophysic'],
     'Junghans': ['Max Bill', 'Meister', 'Form', 'Spektrum'],
     'Laco': ['Flieger', 'Navy', 'Squad', 'Classic', 'Chronograph'],
     'Longines': ['HydroConquest', 'Spirit', 'Master Collection', 'Heritage', 'Conquest', 'DolceVita', 'Legend Diver'],
     'Louis Moinet': ['Tourbillon', 'Chronograph', 'Moon Race', 'Space Walker'],
-    'Maurice Lacroix': ['Aikon', 'Masterpiece', 'Pontos', 'Eliros'],
     'MB&F': ['Horological Machine', 'Legacy Machine', 'Performance Art'],
-    'Montblanc': ['Heritage', 'Star Legacy', '1858', 'Summit', 'TimeWalker'],
+    'Maurice Lacroix': ['Aikon', 'Masterpiece', 'Pontos', 'Eliros'],
     'Mido': ['Multifort', 'Ocean Star', 'Baroncelli', 'Commander'],
+    'Montblanc': ['Heritage', 'Star Legacy', '1858', 'Summit', 'TimeWalker'],
     'Nomos Glashütte': ['Tangente', 'Club', 'Orion', 'Ludwig', 'Metro', 'Ahoi'],
     'Omega': ['Speedmaster', 'Seamaster', 'Constellation', 'De Ville', 'Aqua Terra'],
     'Oris': ['Aquis', 'Big Crown', 'Divers Sixty-Five', 'Artelier', 'ProPilot'],
@@ -74,17 +76,16 @@ class _EditOglasScreenState extends State<EditOglasScreen> {
     'Rado': ['Captain Cook', 'Ceramica', 'DiaStar', 'True Thinline', 'Centrix'],
     'Raymond Weil': ['Freelancer', 'Maestro', 'Toccata', 'Tango'],
     'Richard Mille': ['RM 011', 'RM 027', 'RM 035', 'RM 055', 'RM 067'],
-    'Rolex': ['Submariner', 'Daytona', 'Datejust', 'GMT-Master II', 'Explorer', 'Day-Date', 'Sea-Dweller'],
     'Roger Dubuis': ['Excalibur', 'Velvet', 'Knights of the Round Table'],
+    'Rolex': ['Submariner', 'Daytona', 'Datejust', 'GMT-Master II', 'Explorer', 'Day-Date', 'Sea-Dweller'],
     'Seiko': ['Prospex', 'Presage', 'Astron', '5 Sports', 'King Seiko', 'Premier'],
-    'Sinn': ['U1', '104', '556', '903', '356', 'EZM'],
-    'TAG Heuer': ['Carrera', 'Monaco', 'Aquaracer', 'Formula 1', 'Autavia', 'Connected'],
-    'Tissot': ['PRX', 'Seastar', 'Le Locle', 'Gentleman', 'T-Touch', 'Chemin des Tourelles'],
-    'Tudor': ['Black Bay', 'Pelagos', 'Ranger', 'Royal', '1926'],
-    'Ulysse Nardin': ['Freak', 'Marine', 'Diver', 'Blast', 'Executive'],
-    'Vacheron Constantin': ['Overseas', 'Patrimony', 'Traditionnelle', 'Fiftysix', 'Historiques'],
-    'Zenith': ['Chronomaster', 'Defy', 'Elite', 'Pilot'],
-    'Zodiac': ['Sea Wolf', 'Super Sea Wolf', 'Grandrally', 'Olympos'],
+    'Sinn': ['U1', '104', '556', 'EZM', '900'],
+    'TAG Heuer': ['Carrera', 'Monaco', 'Aquaracer', 'Formula 1', 'Autavia', 'Link'],
+    'Tissot': ['PRX', 'Le Locle', 'Seastar', 'Gentleman', 'Heritage', 'Visodate'],
+    'Tudor': ['Black Bay', 'Pelagos', 'Royal', 'Ranger', '1926'],
+    'Ulysse Nardin': ['Diver', 'Freak', 'Marine', 'Blast'],
+    'Vacheron Constantin': ['Overseas', 'Patrimony', 'Historiques', 'Traditionnelle', 'Fiftysix'],
+    'Zenith': ['Chronomaster', 'Defy', 'Pilot', 'Elite'],
   };
 
   final List<String> godine = List.generate(127, (index) => (2026 - index).toString());
@@ -197,53 +198,26 @@ class _EditOglasScreenState extends State<EditOglasScreen> {
     }
   }
 
-  void _prikaziIOSPicker(String naslov, List<String> opcije, Function(String) onOdabrano) {
-    showCupertinoModalPopup(
-      context: context,
-      builder: (_) => Container(
-        height: 250,
-        color: Theme.of(context).scaffoldBackgroundColor,
-        child: Column(
-          children: [
-            Container(
-              height: 50,
-              color: Theme.of(context).cardColor,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  CupertinoButton(child: const Text('Gotovo'), onPressed: () => Navigator.of(context).pop()),
-                ],
-              ),
-            ),
-            Expanded(
-              child: CupertinoPicker(
-                itemExtent: 32.0,
-                scrollController: FixedExtentScrollController(initialItem: 0),
-                onSelectedItemChanged: (index) => onOdabrano(opcije[index]),
-                children: opcije.map((o) => Center(child: Text(o, style: TextStyle(fontSize: 18, color: Theme.of(context).textTheme.bodyLarge?.color)))).toList(),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _iosPoljeZaBiranje(String label, String? trenutnaVrednost, List<String> opcije, Function(String) onOdabrano) {
+  // --- OVO JE ISTI DROP MENU SA "X" DUGMETOM ZA PONIŠTAVANJE ---
+  Widget _buildDropdown(String label, String? value, List<String> items, Function(String?) onChanged) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return GestureDetector(
-      onTap: opcije.isEmpty ? null : () => _prikaziIOSPicker(label, opcije, onOdabrano),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        decoration: BoxDecoration(color: isDark ? Colors.grey[800] : Colors.white, borderRadius: BorderRadius.circular(10), border: Border.all(color: isDark ? Colors.grey[700]! : Colors.grey.shade300)),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(trenutnaVrednost ?? label, style: TextStyle(fontSize: 16, color: trenutnaVrednost == null ? Colors.grey : (isDark ? Colors.white : Colors.black))),
-            const Icon(CupertinoIcons.chevron_down, color: Colors.grey, size: 18),
-          ],
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: DropdownButtonFormField<String>(
+        decoration: InputDecoration(
+          labelText: label,
+          filled: true,
+          fillColor: isDark ? Colors.grey[800] : Colors.white,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+          suffixIcon: value != null ? IconButton(
+            icon: const Icon(CupertinoIcons.clear_circled, color: Colors.grey, size: 20),
+            onPressed: () => onChanged(null), // Na klik briše vrednost (vraća null)
+          ) : null,
         ),
+        dropdownColor: isDark ? Colors.grey[800] : Colors.white,
+        value: value,
+        items: items.map((e) => DropdownMenuItem(value: e, child: Text(e, style: TextStyle(color: isDark ? Colors.white : Colors.black)))).toList(),
+        onChanged: onChanged,
       ),
     );
   }
@@ -283,8 +257,12 @@ class _EditOglasScreenState extends State<EditOglasScreen> {
               decoration: BoxDecoration(color: isDark ? Colors.grey[900] : Colors.grey[100], borderRadius: BorderRadius.circular(12)),
               child: Column(
                 children: [
-                  _iosPoljeZaBiranje("Brend", izabranBrend, brendoviIModeli.keys.toList(), (v) => setState(() { izabranBrend = v; izabranModel = null; })),
-                  _iosPoljeZaBiranje("Model", izabranModel, izabranBrend != null ? brendoviIModeli[izabranBrend]! : [], (v) => setState(() => izabranModel = v)),
+                  _buildDropdown("Brend", izabranBrend, brendoviIModeli.keys.toList(), (v) => setState(() { 
+                    izabranBrend = v; 
+                    izabranModel = null; // Briše model
+                  })),
+                  if (izabranBrend != null && brendoviIModeli[izabranBrend] != null)
+                    _buildDropdown("Model", izabranModel, brendoviIModeli[izabranBrend]!, (v) => setState(() => izabranModel = v)),
                   
                   Row(
                     children: [
@@ -319,20 +297,20 @@ class _EditOglasScreenState extends State<EditOglasScreen> {
               decoration: BoxDecoration(color: isDark ? Colors.grey[900] : Colors.grey[100], borderRadius: BorderRadius.circular(12)),
               child: Column(
                 children: [
-                  _iosPoljeZaBiranje("Stanje", stanje, stanja, (v) => setState(() => stanje = v)),
-                  _iosPoljeZaBiranje("Godina", godina, godine, (v) => setState(() => godina = v)),
+                  _buildDropdown("Stanje", stanje, stanja, (v) => setState(() => stanje = v)),
+                  _buildDropdown("Godina", godina, godine, (v) => setState(() => godina = v)),
                   Row(
                     children: [
-                      Expanded(child: _iosPoljeZaBiranje("Prečnik", precnik, precnici, (v) => setState(() => precnik = v))),
+                      Expanded(child: _buildDropdown("Prečnik", precnik, precnici, (v) => setState(() => precnik = v))),
                       const SizedBox(width: 10),
-                      Expanded(child: _iosPoljeZaBiranje("Lug-to-Lug", lugToLug, lugToLugLista, (v) => setState(() => lugToLug = v))),
+                      Expanded(child: _buildDropdown("Lug-to-Lug", lugToLug, lugToLugLista, (v) => setState(() => lugToLug = v))),
                     ],
                   ),
-                  _iosPoljeZaBiranje("Materijal", materijal, materijali, (v) => setState(() => materijal = v)),
-                  _iosPoljeZaBiranje("Staklo", staklo, stakla, (v) => setState(() => staklo = v)),
-                  _iosPoljeZaBiranje("Mehanizam", mehanizam, mehanizmi, (v) => setState(() => mehanizam = v)),
-                  _iosPoljeZaBiranje("Vodootpornost", vodootpornost, vodootpornosti, (v) => setState(() => vodootpornost = v)),
-                  _iosPoljeZaBiranje("Kutija i Papiri", kutijaPapiri, opcijeKutija, (v) => setState(() => kutijaPapiri = v)),
+                  _buildDropdown("Materijal", materijal, materijali, (v) => setState(() => materijal = v)),
+                  _buildDropdown("Staklo", staklo, stakla, (v) => setState(() => staklo = v)),
+                  _buildDropdown("Mehanizam", mehanizam, mehanizmi, (v) => setState(() => mehanizam = v)),
+                  _buildDropdown("Vodootpornost", vodootpornost, vodootpornosti, (v) => setState(() => vodootpornost = v)),
+                  _buildDropdown("Kutija i Papiri", kutijaPapiri, opcijeKutija, (v) => setState(() => kutijaPapiri = v)),
                 ],
               ),
             ),
