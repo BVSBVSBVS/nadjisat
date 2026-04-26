@@ -15,6 +15,31 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
   int _trenutnaSlika = 0;
   String telefonProdavca = "";
 
+  @override
+  void initState() {
+    super.initState();
+    _zabeleziUnikatniPregled(); // OPALJUJE SE ČIM SE OTVORI EKRAN!
+  }
+
+  // --- FUNKCIJA ZA BELEŽENJE PREGLEDA ---
+  Future<void> _zabeleziUnikatniPregled() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    final oglasId = widget.oglas['id'];
+    final vlasnikId = widget.oglas['user_id'];
+
+    // Ako gost gleda ili ako vlasnik gleda svoj oglas, NE BELEŽIMO!
+    if (user == null || user.id == vlasnikId) return;
+
+    try {
+      await Supabase.instance.client.from('pregledi_oglasa').insert({
+        'oglas_id': oglasId,
+        'user_id': user.id,
+      });
+      // Ako uspe, upisan je unikatni pregled.
+      // Ako pukne (jer je korisnik vec gledao), Supabase ce ignorisati zbog UNIQUE pravila u bazi.
+    } catch (_) {}
+  }
+
   // --- FUNKCIJE ZA KONTAKT ---
 
   Future<void> _pozoviBroj() async {
@@ -69,7 +94,6 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
     }
 
     try {
-      // 1. Upisujemo ili menjamo ocenu u tabeli 'ocene'
       await Supabase.instance.client.from('ocene').delete().eq('ocenjivac_id', user.id).eq('ocenjeni_id', prodavacId);
       await Supabase.instance.client.from('ocene').insert({
         'ocenjivac_id': user.id,
@@ -77,7 +101,6 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
         'vrednost': zvezdice
       });
 
-      // 2. Racunamo novi prosek i azuriramo profil prodavca
       final res = await Supabase.instance.client.from('ocene').select('vrednost').eq('ocenjeni_id', prodavacId);
       if (res.isNotEmpty) {
         double zbir = 0;
@@ -88,7 +111,7 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
 
       if (mounted) {
          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Uspešno ste ocenili prodavca!")));
-         setState((){}); // Forsira refresh da bi se prikazala nova ocena na kartici
+         setState((){}); 
       }
     } catch(e) {
        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Greška pri ocenjivanju: $e")));
@@ -282,7 +305,6 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
                             ),
                             const SizedBox(height: 15),
                             
-                            // DUGMAD ZA PROFIL I OCENU
                             SizedBox(
                               width: double.infinity,
                               child: Row(
@@ -297,7 +319,7 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
                                       },
                                     ),
                                   ),
-                                  Container(width: 1, height: 20, color: Colors.grey.withOpacity(0.3)), // Linija između
+                                  Container(width: 1, height: 20, color: Colors.grey.withOpacity(0.3)), 
                                   Expanded(
                                     child: CupertinoButton(
                                       padding: const EdgeInsets.symmetric(vertical: 10),
@@ -357,18 +379,11 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
                     Text(oglas['opis'], style: TextStyle(fontSize: 15, color: isDark ? Colors.grey[300] : Colors.grey[800], height: 1.5)),
                     const SizedBox(height: 25),
                   ],
-
                   if (oglas['zamena'] == true)
                     Container(
                       padding: const EdgeInsets.all(12), margin: const EdgeInsets.only(bottom: 10),
                       decoration: BoxDecoration(color: Colors.orange.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
                       child: const Row(children: [Icon(CupertinoIcons.arrow_right_arrow_left, color: Colors.orange), SizedBox(width: 10), Text("Moguća zamena", style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold))]),
-                    ),
-                  if (oglas['servisna_istorija'] != null && oglas['servisna_istorija'].toString().isNotEmpty)
-                    Container(
-                      padding: const EdgeInsets.all(12), margin: const EdgeInsets.only(bottom: 10),
-                      decoration: BoxDecoration(color: Colors.green.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
-                      child: Row(children: [const Icon(CupertinoIcons.wrench_fill, color: Colors.green), const SizedBox(width: 10), Expanded(child: Text("Servis: ${oglas['servisna_istorija']}", style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold)))]),
                     ),
                 ],
               ),
@@ -377,7 +392,6 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
         ),
       ),
       
-      // --- MODERAN DONJI MENI ZA KONTAKT ---
       bottomNavigationBar: SafeArea(
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
