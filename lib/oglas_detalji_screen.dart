@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:url_launcher/url_launcher.dart'; // NOVI ALAT ZA POZIVE I PORUKE
+import 'package:url_launcher/url_launcher.dart';
 
 class OglasDetaljiScreen extends StatefulWidget {
   final Map<String, dynamic> oglas;
@@ -13,11 +13,10 @@ class OglasDetaljiScreen extends StatefulWidget {
 
 class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
   int _trenutnaSlika = 0;
-  String telefonProdavca = ""; // Čuvaćemo broj ovde da bi ga donja dugmad koristila
+  String telefonProdavca = "";
 
   // --- FUNKCIJE ZA KONTAKT ---
 
-  // 1. Običan poziv
   Future<void> _pozoviBroj() async {
     if (telefonProdavca.isEmpty) return;
     final Uri url = Uri.parse('tel:$telefonProdavca');
@@ -26,10 +25,8 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
     }
   }
 
-  // 2. Običan SMS (sa unapred napisanim tekstom)
   Future<void> _posaljiSMS(String naslovOglasa) async {
     if (telefonProdavca.isEmpty) return;
-    // Pravimo poruku koja odmah piše za koji sat se kupac javlja
     final poruka = Uri.encodeComponent("Zdravo, pišem povodom oglasa na NadjiSat za: $naslovOglasa.");
     final Uri url = Uri.parse('sms:$telefonProdavca?body=$poruka');
     if (!await launchUrl(url)) {
@@ -37,10 +34,8 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
     }
   }
 
-  // 3. WhatsApp
   Future<void> _otvoriWhatsApp(String naslovOglasa) async {
     if (telefonProdavca.isEmpty) return;
-    // Čistimo broj (skidamo pluseve, razmake, minuse jer WA trazi čist broj tipa 38164...)
     String cistBroj = telefonProdavca.replaceAll(RegExp(r'[^0-9]'), '');
     final poruka = Uri.encodeComponent("Zdravo, pišem povodom oglasa na NadjiSat za: $naslovOglasa.");
     final Uri url = Uri.parse('https://wa.me/$cistBroj?text=$poruka');
@@ -50,15 +45,94 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
     }
   }
 
-  // 4. Viber (Viber ima specifičan URL format)
   Future<void> _otvoriViber() async {
     if (telefonProdavca.isEmpty) return;
-    String cistBroj = telefonProdavca.replaceAll(RegExp(r'[^0-9+]'), ''); // Viber obično voli +
+    String cistBroj = telefonProdavca.replaceAll(RegExp(r'[^0-9+]'), '');
     final Uri url = Uri.parse('viber://chat?number=$cistBroj');
     
     if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Viber nije instaliran')));
     }
+  }
+
+  // --- FUNKCIJE ZA OCENJIVANJE PRODAVCA ---
+  
+  Future<void> _oceniProdavca(String prodavacId, int zvezdice) async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Morate biti prijavljeni da biste ocenili.")));
+      return;
+    }
+    if (user.id == prodavacId) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Ne možete oceniti sami sebe!")));
+      return;
+    }
+
+    try {
+      // 1. Upisujemo ili menjamo ocenu u tabeli 'ocene'
+      await Supabase.instance.client.from('ocene').delete().eq('ocenjivac_id', user.id).eq('ocenjeni_id', prodavacId);
+      await Supabase.instance.client.from('ocene').insert({
+        'ocenjivac_id': user.id,
+        'ocenjeni_id': prodavacId,
+        'vrednost': zvezdice
+      });
+
+      // 2. Racunamo novi prosek i azuriramo profil prodavca
+      final res = await Supabase.instance.client.from('ocene').select('vrednost').eq('ocenjeni_id', prodavacId);
+      if (res.isNotEmpty) {
+        double zbir = 0;
+        for (var r in res) { zbir += (r['vrednost'] as num).toDouble(); }
+        double prosek = zbir / res.length;
+        await Supabase.instance.client.from('profili').update({'ocena': prosek.toStringAsFixed(1)}).eq('id', prodavacId);
+      }
+
+      if (mounted) {
+         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Uspešno ste ocenili prodavca!")));
+         setState((){}); // Forsira refresh da bi se prikazala nova ocena na kartici
+      }
+    } catch(e) {
+       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Greška pri ocenjivanju: $e")));
+    }
+  }
+
+  void _prikaziDijalogZaOcenu(String prodavacId) {
+    showCupertinoDialog(
+      context: context,
+      builder: (context) {
+        int odabranaOcena = 5;
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return CupertinoAlertDialog(
+              title: const Text("Oceni prodavca"),
+              content: Column(
+                children: [
+                  const SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(5, (index) {
+                      return GestureDetector(
+                        onTap: () => setDialogState(() => odabranaOcena = index + 1),
+                        child: Icon(index < odabranaOcena ? Icons.star : Icons.star_border, color: Colors.amber, size: 32),
+                      );
+                    }),
+                  ),
+                ],
+              ),
+              actions: [
+                CupertinoDialogAction(child: const Text("Otkaži"), onPressed: () => Navigator.pop(context)),
+                CupertinoDialogAction(
+                  child: const Text("Oceni", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue)),
+                  onPressed: () {
+                    Navigator.pop(context);
+                    _oceniProdavca(prodavacId, odabranaOcena);
+                  },
+                ),
+              ],
+            );
+          }
+        );
+      }
+    );
   }
 
   Widget _buildSpecRed(String naslov, String? vrednost, bool isDark) {
@@ -157,7 +231,6 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
                       final telefon = prodavac['telefon'] ?? "";
                       final ocena = prodavac['ocena']?.toString() ?? "Nema ocena"; 
 
-                      // Čuvamo telefon u state-u da bi donja dugmad mogla da ga koriste
                       WidgetsBinding.instance.addPostFrameCallback((_) {
                         if (mounted && telefonProdavca != telefon) {
                           setState(() => telefonProdavca = telefon);
@@ -207,16 +280,40 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
                                 Text(telefon.isNotEmpty ? telefon : "Nije unet broj", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: isDark ? Colors.white : Colors.black)),
                               ],
                             ),
-                            const SizedBox(height: 10),
+                            const SizedBox(height: 15),
+                            
+                            // DUGMAD ZA PROFIL I OCENU
                             SizedBox(
                               width: double.infinity,
-                              child: CupertinoButton(
-                                padding: const EdgeInsets.symmetric(vertical: 10),
-                                color: Colors.transparent,
-                                child: const Text("Vidi ceo profil", style: TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold)),
-                                onPressed: () {
-                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Ovo će otvoriti profil prodavca!")));
-                                },
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: CupertinoButton(
+                                      padding: const EdgeInsets.symmetric(vertical: 10),
+                                      color: Colors.transparent,
+                                      child: const Text("Vidi profil", style: TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold)),
+                                      onPressed: () {
+                                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Otvara se tuđi profil...")));
+                                      },
+                                    ),
+                                  ),
+                                  Container(width: 1, height: 20, color: Colors.grey.withOpacity(0.3)), // Linija između
+                                  Expanded(
+                                    child: CupertinoButton(
+                                      padding: const EdgeInsets.symmetric(vertical: 10),
+                                      color: Colors.transparent,
+                                      child: const Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Icon(Icons.star, color: Colors.amber, size: 16),
+                                          SizedBox(width: 5),
+                                          Text("Oceni", style: TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold)),
+                                        ],
+                                      ),
+                                      onPressed: () => _prikaziDijalogZaOcenu(oglas['user_id']),
+                                    ),
+                                  ),
+                                ],
                               ),
                             )
                           ],
@@ -292,7 +389,6 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
             ? const Text("Broj prodavca nije dostupan", textAlign: TextAlign.center, style: TextStyle(color: Colors.grey))
             : Row(
                 children: [
-                  // DUGME ZA POZIV (Glavno)
                   Expanded(
                     flex: 2,
                     child: CupertinoButton(
@@ -311,16 +407,14 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
                     ),
                   ),
                   const SizedBox(width: 10),
-                  
-                  // DUGMAD ZA SMS, WHATSAPP, VIBER
                   Expanded(
                     flex: 3,
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         _maloKontaktDugme(CupertinoIcons.chat_bubble_text_fill, Colors.blueAccent, () => _posaljiSMS(naslovSata)),
-                        _maloKontaktDugme(Icons.wechat, const Color(0xFF25D366), () => _otvoriWhatsApp(naslovSata)), // WhatsApp zelena
-                        _maloKontaktDugme(Icons.phone_in_talk, const Color(0xFF7360F2), _otvoriViber), // Viber ljubičasta
+                        _maloKontaktDugme(Icons.wechat, const Color(0xFF25D366), () => _otvoriWhatsApp(naslovSata)), 
+                        _maloKontaktDugme(Icons.phone_in_talk, const Color(0xFF7360F2), _otvoriViber), 
                       ],
                     ),
                   )
@@ -331,7 +425,6 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
     );
   }
 
-  // Pomoćni widget za ona mala okrugla dugmad (SMS, WA, Viber)
   Widget _maloKontaktDugme(IconData ikona, Color boja, VoidCallback onKlik) {
     return GestureDetector(
       onTap: onKlik,

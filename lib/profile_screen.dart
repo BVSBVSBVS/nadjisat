@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'login_screen.dart'; 
-// NAPOMENA: Ako ti je ekran za izmenu profila drugacije nazvan, promeni ime ovde ispod:
-// import 'uredi_profil_screen.dart'; 
+import 'uredi_profil_screen.dart'; // Uvezen novi ekran za izmenu profila
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -139,13 +138,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black),
                         ),
                         const SizedBox(height: 5),
-                        // PRIKAZ EMAIL ADRESE!
+                        // PRIKAZ EMAIL ADRESE
                         Text(
                           user!.email ?? "Nema emaila",
                           style: const TextStyle(fontSize: 16, color: Colors.grey),
                         ),
                         const SizedBox(height: 5),
-                        // PRIKAZ OCENA!
+                        // PRIKAZ OCENA
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -195,7 +194,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                   const SizedBox(height: 30),
 
-                  // DUGME ZA IZMENU PROFILA
+                  // DUGME ZA IZMENU PROFILA (POPRAVLJENO!)
                   SizedBox(
                     width: double.infinity,
                     height: 50,
@@ -203,8 +202,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       color: isDark ? Colors.grey[800] : Colors.grey[200],
                       borderRadius: BorderRadius.circular(10),
                       onPressed: () {
-                        // OVDE POVEZUJEŠ NA EKRAN ZA IZMENU KAD GA NAPRAVIŠ
-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Uredi profil uskoro!")));
+                        // Prebacuje na ekran za uređivanje i KAD SE VRATI osvežava profil!
+                        Navigator.push(
+                          context, 
+                          MaterialPageRoute(builder: (context) => const UrediProfilScreen())
+                        ).then((_) => _ucitajProfil());
                       },
                       child: Text("Uredi profil", style: TextStyle(color: isDark ? Colors.white : Colors.black, fontWeight: FontWeight.bold)),
                     ),
