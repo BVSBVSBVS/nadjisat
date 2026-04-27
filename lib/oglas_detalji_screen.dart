@@ -3,7 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'edit_oglas_screen.dart'; // <-- Promeni ovo ako ti se fajl za izmenu zove drugacije
+import 'edit_oglas_screen.dart'; // <-- Promeni ako ti se fajl zove drugacije
 import 'javni_profil_screen.dart';
 
 class OglasDetaljiScreen extends StatefulWidget {
@@ -19,7 +19,8 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
   String telefonProdavca = "";
   final trenutniKorisnik = Supabase.instance.client.auth.currentUser;
   
-  bool vecOcenjeno = false; // Čuva informaciju da li si već ocenio ovaj oglas
+  bool vecOcenjeno = false;
+  String? lokalnaOcena; // NOVO: Čuva instant ocenu da se odmah prikaže na ekranu!
 
   @override
   void initState() {
@@ -28,7 +29,6 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
     _proveriDaLiJeOcenio();
   }
 
-  // --- PROVERA DA LI JE KORISNIK VEĆ OCENIO OVAJ OGLAS ---
   Future<void> _proveriDaLiJeOcenio() async {
     if (trenutniKorisnik == null) return;
     try {
@@ -51,8 +51,6 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
     } catch (_) {}
   }
 
-  // --- FUNKCIJE ZA VLASNIKA OGLASA ---
-  
   Future<void> _obrisiOglas() async {
     try {
       await Supabase.instance.client.from('satovi').delete().eq('id', widget.oglas['id']);
@@ -93,8 +91,6 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
     }
   }
 
-  // --- FUNKCIJE ZA KONTAKT (ZA KUPCE) ---
-
   Future<void> _pozoviBroj() async {
     if (telefonProdavca.isEmpty) return;
     final Uri url = Uri.parse('tel:$telefonProdavca');
@@ -131,13 +127,10 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
     }
   }
 
-  // --- FUNKCIJE ZA DETALJNO OCENJIVANJE PRODAVCA ---
-  
   Future<void> _oceniProdavca(String prodavacId, String oglasId, int zvezdice, bool opis, bool komunikacija, bool stanje, String komentarText) async {
     if (trenutniKorisnik == null) return;
 
     try {
-      // 1. Upisujemo novu ocenu u bazu zajedno sa komentarom
       await Supabase.instance.client.from('ocene').insert({
         'ocenjivac_id': trenutniKorisnik!.id,
         'ocenjeni_id': prodavacId,
@@ -146,23 +139,23 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
         'opis_tacan': opis,
         'komunikacija_korektna': komunikacija,
         'stanje_tacno': stanje,
-        'komentar': komentarText, // DODAT KOMENTAR
+        'komentar': komentarText,
       });
 
-      // 2. Računanje novog proseka i ažuriranje tabele profili
       final res = await Supabase.instance.client.from('ocene').select('vrednost').eq('ocenjeni_id', prodavacId);
+      double prosek = 0.0;
       if (res.isNotEmpty) {
         double zbir = 0;
         for (var r in res) { zbir += (r['vrednost'] as num).toDouble(); }
-        double prosek = zbir / res.length;
+        prosek = zbir / res.length;
         await Supabase.instance.client.from('profili').update({'ocena': prosek}).eq('id', prodavacId);
       }
 
       if (mounted) {
          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Ocena uspešno sačuvana!")));
-         // Podesavamo da je korisnik ocenio da ne bi mogao ponovo, i osvezavamo UI
          setState(() {
            vecOcenjeno = true;
+           lokalnaOcena = prosek.toStringAsFixed(1); // OVO INSTANT MENJA EKRAN!
          }); 
       }
     } catch(e) {
@@ -195,14 +188,14 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
             return Container(
               padding: EdgeInsets.only(
                 left: 24, right: 24, top: 24,
-                bottom: MediaQuery.of(context).viewInsets.bottom + 24 // Da tastatura ne prekrije polje
+                bottom: MediaQuery.of(context).viewInsets.bottom + 24 
               ),
               decoration: BoxDecoration(
                 color: Theme.of(context).scaffoldBackgroundColor,
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
               ),
               child: SafeArea(
-                child: SingleChildScrollView( // Dodat scroll da bi stalo na male ekrane sa tastaturom
+                child: SingleChildScrollView(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -383,7 +376,6 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
                   const Text("INFORMACIJE O PRODAVCU", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)),
                   const SizedBox(height: 10),
                   
-                  // OSVEŽAVANJE PRODAVCA I OCENE
                   FutureBuilder<Map<String, dynamic>?>(
                     future: Supabase.instance.client.from('profili').select().eq('id', oglas['user_id']).maybeSingle(),
                     builder: (context, snapshot) {
@@ -395,9 +387,11 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
                       final ime = prodavac['ime'] ?? prodavac['username'] ?? "Korisnik";
                       final telefon = prodavac['telefon'] ?? "";
                       
-                      // Magija koja popravlja "0" bag. Formatira ocenu lepo.
+                      // NOVO: Magija koja prvo proverava da li imamo LOKALNU ocenu (npr. tek ocenjeno), pa tek onda povlači iz baze
                       String ocena = "Nema ocena";
-                      if (prodavac['ocena'] != null && prodavac['ocena'] > 0) {
+                      if (lokalnaOcena != null) {
+                        ocena = lokalnaOcena!;
+                      } else if (prodavac['ocena'] != null && prodavac['ocena'] > 0) {
                         ocena = double.parse(prodavac['ocena'].toString()).toStringAsFixed(1);
                       }
 
@@ -475,7 +469,6 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
                                       child: CupertinoButton(
                                         padding: const EdgeInsets.symmetric(vertical: 10),
                                         color: Colors.transparent,
-                                        // AKO JE OCENIO, POKAŽI ZELENU KVAČICU
                                         child: Row(
                                           mainAxisAlignment: MainAxisAlignment.center,
                                           children: [
