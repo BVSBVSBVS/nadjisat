@@ -109,7 +109,7 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
   final List<String> materijali = ['Čelik', 'Zlato (18k)', 'Titanijum', 'Platina', 'Keramika', 'Bronza', 'Guma/Plastika'];
   final List<String> materijaliNarukvice = ['Čelik', 'Koža', 'Guma', 'Tekstil/Nato', 'Titanijum', 'Zlato'];
   final List<String> bojeBrojcanika = ['Crna', 'Plava', 'Bela/Srebrna', 'Zelena', 'Siva', 'Zlatna', 'Druga'];
-  final List<String> stanja = ['1. Novo sa folijama', '2. Kao novo', '3. Odlično', '4. Dobro', '5. Vidljivi tragovi korišćenja'];
+  final List<String> stanja = ['Novo sa folijama', 'Kao novo', 'Odlično', 'Dobro', 'Vidljivi tragovi korišćenja'];
   final List<String> opcijeGarancije = ['Nema garanciju', 'Radna garancija', '1 godina', '2+ godine', 'Važeća fabrička'];
   final List<String> valute = ['EUR', 'RSD', 'KM'];
 

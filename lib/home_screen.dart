@@ -93,7 +93,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final List<String> materijali = ['Sve', 'Čelik', 'Zlato (18k)', 'Titanijum', 'Platina', 'Keramika', 'Bronza', 'Guma/Plastika'];
   final List<String> materijaliNarukvice = ['Sve', 'Čelik', 'Koža', 'Guma', 'Tekstil/Nato', 'Titanijum', 'Zlato'];
   final List<String> bojeBrojcanika = ['Sve', 'Crna', 'Plava', 'Bela/Srebrna', 'Zelena', 'Siva', 'Zlatna', 'Druga'];
-  final List<String> stanja = ['Sve', '1. Novo sa folijama', '2. Kao novo', '3. Odlično', '4. Dobro', '5. Vidljivi tragovi korišćenja'];
+  final List<String> stanja = ['Sve', ' Novo sa folijama', 'Kao novo', 'Odlično', 'Dobro', 'Vidljivi tragovi korišćenja'];
   final List<String> opcijeGarancije = ['Sve', 'Nema garanciju', 'Radna garancija', '1 godina', '2+ godine', 'Važeća fabrička'];
 
   @override

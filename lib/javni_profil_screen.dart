@@ -31,7 +31,7 @@ class _JavniProfilScreenState extends State<JavniProfilScreen> {
       final p = await Supabase.instance.client.from('profili').select().eq('id', widget.prodavacId).maybeSingle();
       
       // 2. Učitavamo sve njegove ocene
-      final o = await Supabase.instance.client.from('ocene').select().eq('ocenjeni_id', widget.prodavacId).order('created_at', ascending: false);
+      final o = await Supabase.instance.client.from('ocene').select('*, satovi(brend, model)').eq('ocenjeni_id', widget.prodavacId).order('created_at', ascending: false);
 
       // Računanje statistike
       ukupnoOcena = o.length;
@@ -199,6 +199,17 @@ class _JavniProfilScreenState extends State<JavniProfilScreen> {
                         _buildAnketaRed("Opis tačan:", o['opis_tacan'] == true, isDark),
                         _buildAnketaRed("Korektna komunikacija:", o['komunikacija_korektna'] == true, isDark),
                         _buildAnketaRed("Stanje ispoštovano:", o['stanje_tacno'] == true, isDark),
+                      // ... tu je kod: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [...]),
+const SizedBox(height: 5),
+
+// NOVO: Prikazuje za koji oglas je ocena!
+Text(
+  o['satovi'] != null ? "Sat: ${o['satovi']['brend']} ${o['satovi']['model']}" : "Oglas je u međuvremenu obrisan",
+  style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blueAccent, fontSize: 13),
+),
+
+const SizedBox(height: 10),
+// ... ispod ide kod za Ankete (_buildAnketaRed...)
                       ],
                     ),
                   );

@@ -20,11 +20,11 @@ class _IzmeniOglasScreenState extends State<IzmeniOglasScreen> {
   bool isSaving = false;
 
   final List<String> stanja = [
-    '1. Novo sa folijama', 
-    '2. Kao novo', 
-    '3. Odlično', 
-    '4. Dobro', 
-    '5. Vidljivi tragovi korišćenja'
+    'Novo sa folijama', 
+    ' Kao novo', 
+    'Odlično', 
+    'Dobro', 
+    'Vidljivi tragovi korišćenja'
   ];
 
   @override
