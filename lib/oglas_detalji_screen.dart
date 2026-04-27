@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'edit_oglas_screen.dart'; // Ili kako god da ti se tačno zove fajl
+import 'javni_profil_screen.dart';
 
 class OglasDetaljiScreen extends StatefulWidget {
   final Map<String, dynamic> oglas;
@@ -338,15 +339,19 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
                                 child: Row(
                                   children: [
                                     Expanded(
-                                      child: CupertinoButton(
-                                        padding: const EdgeInsets.symmetric(vertical: 10),
-                                        color: Colors.transparent,
-                                        child: const Text("Vidi profil", style: TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold)),
-                                        onPressed: () {
-                                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Otvara se tuđi profil...")));
-                                        },
-                                      ),
-                                    ),
+  child: CupertinoButton(
+    padding: const EdgeInsets.symmetric(vertical: 10),
+    color: Colors.transparent,
+    child: const Text("Vidi profil", style: TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold)),
+    onPressed: () {
+      // PREBACUJE NA NOVI EKRAN JAVNOG PROFILA I ŠALJE ID PRODAVCA
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => JavniProfilScreen(prodavacId: oglas['user_id'])),
+      );
+    },
+  ),
+),
                                     Container(width: 1, height: 20, color: Colors.grey.withOpacity(0.3)), 
                                     Expanded(
                                       child: CupertinoButton(
