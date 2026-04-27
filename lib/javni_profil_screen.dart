@@ -27,13 +27,9 @@ class _JavniProfilScreenState extends State<JavniProfilScreen> {
 
   Future<void> _ucitajProfilIOcene() async {
     try {
-      // 1. Učitavamo podatke prodavca
       final p = await Supabase.instance.client.from('profili').select().eq('id', widget.prodavacId).maybeSingle();
-      
-      // 2. Učitavamo sve njegove ocene
       final o = await Supabase.instance.client.from('ocene').select('*, satovi(brend, model)').eq('ocenjeni_id', widget.prodavacId).order('created_at', ascending: false);
 
-      // Računanje statistike
       ukupnoOcena = o.length;
       if (ukupnoOcena > 0) {
         double zbir = 0;
@@ -85,6 +81,21 @@ class _JavniProfilScreenState extends State<JavniProfilScreen> {
     );
   }
 
+  Widget _buildAnketaRed(String pitanje, bool odgovor, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        children: [
+          Icon(odgovor ? CupertinoIcons.checkmark_alt_circle_fill : CupertinoIcons.xmark_circle_fill, size: 14, color: odgovor ? Colors.green : Colors.red),
+          const SizedBox(width: 8),
+          Text(pitanje, style: TextStyle(fontSize: 13, color: isDark ? Colors.grey[300] : Colors.grey[700])),
+          const Spacer(),
+          Text(odgovor ? "Da" : "Ne", style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: odgovor ? Colors.green : Colors.red)),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -103,7 +114,6 @@ class _JavniProfilScreenState extends State<JavniProfilScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // GORNJI DEO PROFILA
             Row(
               children: [
                 CircleAvatar(radius: 40, backgroundColor: Colors.blueAccent.withOpacity(0.2), child: const Icon(CupertinoIcons.person_fill, size: 40, color: Colors.blueAccent)),
@@ -130,7 +140,6 @@ class _JavniProfilScreenState extends State<JavniProfilScreen> {
             ),
             const SizedBox(height: 30),
 
-            // STATISTIKA OCENA (Kao na Google Play/App Store)
             const Text("Ocene korisnika", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 15),
             Container(
@@ -138,7 +147,6 @@ class _JavniProfilScreenState extends State<JavniProfilScreen> {
               decoration: BoxDecoration(color: isDark ? Colors.grey[900] : Colors.white, borderRadius: BorderRadius.circular(15), border: Border.all(color: Colors.grey.withOpacity(0.2))),
               child: Row(
                 children: [
-                  // VELIKI PROSEK
                   Column(
                     children: [
                       Text(prosecnaOcena.toStringAsFixed(1), style: const TextStyle(fontSize: 48, fontWeight: FontWeight.w900)),
@@ -150,7 +158,6 @@ class _JavniProfilScreenState extends State<JavniProfilScreen> {
                     ],
                   ),
                   const SizedBox(width: 20),
-                  // BARS ZA 5, 4, 3, 2, 1
                   Expanded(
                     child: Column(
                       children: [
@@ -180,6 +187,7 @@ class _JavniProfilScreenState extends State<JavniProfilScreen> {
                 itemBuilder: (context, index) {
                   final o = ocene[index];
                   int zvezdice = o['vrednost'] ?? 5;
+                  
                   return Container(
                     margin: const EdgeInsets.only(bottom: 15),
                     padding: const EdgeInsets.all(15),
@@ -194,22 +202,42 @@ class _JavniProfilScreenState extends State<JavniProfilScreen> {
                             Text(o['created_at']?.split('T')[0] ?? "", style: const TextStyle(color: Colors.grey, fontSize: 12)),
                           ],
                         ),
+                        
+                        const SizedBox(height: 5),
+
+                        Text(
+                          o['satovi'] != null ? "Sat: ${o['satovi']['brend']} ${o['satovi']['model']}" : "Oglas je u međuvremenu obrisan",
+                          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blueAccent, fontSize: 13),
+                        ),
+                        
                         const SizedBox(height: 10),
-                        // Odgovori iz Ankete
+                        
                         _buildAnketaRed("Opis tačan:", o['opis_tacan'] == true, isDark),
                         _buildAnketaRed("Korektna komunikacija:", o['komunikacija_korektna'] == true, isDark),
                         _buildAnketaRed("Stanje ispoštovano:", o['stanje_tacno'] == true, isDark),
-                      // ... tu je kod: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [...]),
-const SizedBox(height: 5),
 
-// NOVO: Prikazuje za koji oglas je ocena!
-Text(
-  o['satovi'] != null ? "Sat: ${o['satovi']['brend']} ${o['satovi']['model']}" : "Oglas je u međuvremenu obrisan",
-  style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blueAccent, fontSize: 13),
-),
-
-const SizedBox(height: 10),
-// ... ispod ide kod za Ankete (_buildAnketaRed...)
+                        // PRIKAZ KOMENTARA KUPCA
+                        if (o['komentar'] != null && o['komentar'].toString().trim().isNotEmpty) ...[
+                          const SizedBox(height: 12),
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: isDark ? Colors.grey[800] : Colors.white,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: Colors.grey.withOpacity(0.2))
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Icon(CupertinoIcons.quote_bubble, size: 16, color: Colors.grey),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text('"${o['komentar']}"', style: TextStyle(fontStyle: FontStyle.italic, color: isDark ? Colors.grey[300] : Colors.grey[800], fontSize: 14)),
+                                ),
+                              ],
+                            ),
+                          )
+                        ]
                       ],
                     ),
                   );
@@ -217,21 +245,6 @@ const SizedBox(height: 10),
               )
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildAnketaRed(String pitanje, bool odgovor, bool isDark) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Row(
-        children: [
-          Icon(odgovor ? CupertinoIcons.checkmark_alt_circle_fill : CupertinoIcons.xmark_circle_fill, size: 14, color: odgovor ? Colors.green : Colors.red),
-          const SizedBox(width: 8),
-          Text(pitanje, style: TextStyle(fontSize: 13, color: isDark ? Colors.grey[300] : Colors.grey[700])),
-          const Spacer(),
-          Text(odgovor ? "Da" : "Ne", style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: odgovor ? Colors.green : Colors.red)),
-        ],
       ),
     );
   }

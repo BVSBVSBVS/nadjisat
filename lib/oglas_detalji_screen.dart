@@ -3,7 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'edit_oglas_screen.dart'; // <-- AKO TI SE FAJL ZA IZMENU ZOVE DRUGAČIJE, PROMENI OVO
+import 'edit_oglas_screen.dart'; // <-- Promeni ovo ako ti se fajl za izmenu zove drugacije
 import 'javni_profil_screen.dart';
 
 class OglasDetaljiScreen extends StatefulWidget {
@@ -18,11 +18,28 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
   int _trenutnaSlika = 0;
   String telefonProdavca = "";
   final trenutniKorisnik = Supabase.instance.client.auth.currentUser;
+  
+  bool vecOcenjeno = false; // Čuva informaciju da li si već ocenio ovaj oglas
 
   @override
   void initState() {
     super.initState();
     _zabeleziUnikatniPregled();
+    _proveriDaLiJeOcenio();
+  }
+
+  // --- PROVERA DA LI JE KORISNIK VEĆ OCENIO OVAJ OGLAS ---
+  Future<void> _proveriDaLiJeOcenio() async {
+    if (trenutniKorisnik == null) return;
+    try {
+      final res = await Supabase.instance.client.from('ocene')
+          .select('id')
+          .eq('ocenjivac_id', trenutniKorisnik!.id)
+          .eq('oglas_id', widget.oglas['id'].toString());
+      if (res.isNotEmpty && mounted) {
+        setState(() => vecOcenjeno = true);
+      }
+    } catch (_) {}
   }
 
   Future<void> _zabeleziUnikatniPregled() async {
@@ -65,7 +82,6 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
   void _idiNaIzmenuOglasa() async {
     final bool? izmenjeno = await Navigator.push(
       context,
-      // OBRATI PAŽNJU: Ako se tvoja klasa za izmenu zove drugačije, promeni 'IzmeniOglasScreen' u to ime!
       MaterialPageRoute(builder: (context) => IzmeniOglasScreen(oglas: widget.oglas)),
     );
 
@@ -117,22 +133,11 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
 
   // --- FUNKCIJE ZA DETALJNO OCENJIVANJE PRODAVCA ---
   
-  Future<void> _oceniProdavca(String prodavacId, String oglasId, int zvezdice, bool opis, bool komunikacija, bool stanje) async {
-    if (trenutniKorisnik == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Morate biti prijavljeni da biste ocenili.")));
-      return;
-    }
-    if (trenutniKorisnik!.id == prodavacId) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Ne možete oceniti sami sebe!")));
-      return;
-    }
+  Future<void> _oceniProdavca(String prodavacId, String oglasId, int zvezdice, bool opis, bool komunikacija, bool stanje, String komentarText) async {
+    if (trenutniKorisnik == null) return;
 
     try {
-      await Supabase.instance.client.from('ocene')
-          .delete()
-          .eq('ocenjivac_id', trenutniKorisnik!.id)
-          .eq('oglas_id', oglasId);
-
+      // 1. Upisujemo novu ocenu u bazu zajedno sa komentarom
       await Supabase.instance.client.from('ocene').insert({
         'ocenjivac_id': trenutniKorisnik!.id,
         'ocenjeni_id': prodavacId,
@@ -141,19 +146,24 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
         'opis_tacan': opis,
         'komunikacija_korektna': komunikacija,
         'stanje_tacno': stanje,
+        'komentar': komentarText, // DODAT KOMENTAR
       });
 
+      // 2. Računanje novog proseka i ažuriranje tabele profili
       final res = await Supabase.instance.client.from('ocene').select('vrednost').eq('ocenjeni_id', prodavacId);
       if (res.isNotEmpty) {
         double zbir = 0;
         for (var r in res) { zbir += (r['vrednost'] as num).toDouble(); }
         double prosek = zbir / res.length;
-        await Supabase.instance.client.from('profili').update({'ocena': prosek.toStringAsFixed(1)}).eq('id', prodavacId);
+        await Supabase.instance.client.from('profili').update({'ocena': prosek}).eq('id', prodavacId);
       }
 
       if (mounted) {
          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Ocena uspešno sačuvana!")));
-         setState((){}); 
+         // Podesavamo da je korisnik ocenio da ne bi mogao ponovo, i osvezavamo UI
+         setState(() {
+           vecOcenjeno = true;
+         }); 
       }
     } catch(e) {
        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Greška pri ocenjivanju: $e")));
@@ -161,6 +171,13 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
   }
 
   void _prikaziDijalogZaOcenu(String prodavacId) {
+    if (vecOcenjeno) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Već ste ocenili ovaj oglas!")));
+      return;
+    }
+
+    TextEditingController komentarController = TextEditingController();
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -173,82 +190,104 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
 
         return StatefulBuilder(
           builder: (context, setModalState) {
+            final isDark = Theme.of(context).brightness == Brightness.dark;
+            
             return Container(
-              padding: const EdgeInsets.all(24),
+              padding: EdgeInsets.only(
+                left: 24, right: 24, top: 24,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 24 // Da tastatura ne prekrije polje
+              ),
               decoration: BoxDecoration(
                 color: Theme.of(context).scaffoldBackgroundColor,
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
               ),
               child: SafeArea(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Center(child: Container(width: 40, height: 5, decoration: BoxDecoration(color: Colors.grey[400], borderRadius: BorderRadius.circular(10)))),
-                    const SizedBox(height: 20),
-                    const Text("Oceni prodavca", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 5),
-                    const Text("Tvoje iskustvo pomaže drugim kupcima.", style: TextStyle(color: Colors.grey)),
-                    const SizedBox(height: 25),
+                child: SingleChildScrollView( // Dodat scroll da bi stalo na male ekrane sa tastaturom
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(child: Container(width: 40, height: 5, decoration: BoxDecoration(color: Colors.grey[400], borderRadius: BorderRadius.circular(10)))),
+                      const SizedBox(height: 20),
+                      const Text("Oceni prodavca", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 5),
+                      const Text("Tvoje iskustvo pomaže drugim kupcima.", style: TextStyle(color: Colors.grey)),
+                      const SizedBox(height: 25),
 
-                    const Text("Opšta ocena", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                    const SizedBox(height: 10),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(5, (index) {
-                        return GestureDetector(
-                          onTap: () => setModalState(() => odabranaOcena = index + 1),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 5),
-                            child: Icon(index < odabranaOcena ? Icons.star : Icons.star_border, color: Colors.amber, size: 40),
-                          ),
-                        );
-                      }),
-                    ),
-                    
-                    const Divider(height: 40),
-
-                    const Text("Detalji transakcije", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                    const SizedBox(height: 10),
-                    
-                    SwitchListTile(
-                      title: const Text("Da li je opis sata bio tačan?", style: TextStyle(fontSize: 15)),
-                      value: tacanOpis,
-                      activeColor: Colors.blueAccent,
-                      contentPadding: EdgeInsets.zero,
-                      onChanged: (val) => setModalState(() => tacanOpis = val),
-                    ),
-                    SwitchListTile(
-                      title: const Text("Komunikacija je bila korektna?", style: TextStyle(fontSize: 15)),
-                      value: dobraKomunikacija,
-                      activeColor: Colors.blueAccent,
-                      contentPadding: EdgeInsets.zero,
-                      onChanged: (val) => setModalState(() => dobraKomunikacija = val),
-                    ),
-                    SwitchListTile(
-                      title: const Text("Stanje odgovara slikama?", style: TextStyle(fontSize: 15)),
-                      value: tacnoStanje,
-                      activeColor: Colors.blueAccent,
-                      contentPadding: EdgeInsets.zero,
-                      onChanged: (val) => setModalState(() => tacnoStanje = val),
-                    ),
-
-                    const SizedBox(height: 30),
-
-                    SizedBox(
-                      width: double.infinity,
-                      height: 55,
-                      child: CupertinoButton(
-                        color: Colors.blueAccent,
-                        borderRadius: BorderRadius.circular(15),
-                        onPressed: () {
-                          Navigator.pop(context);
-                          _oceniProdavca(prodavacId, widget.oglas['id'].toString(), odabranaOcena, tacanOpis, dobraKomunikacija, tacnoStanje);
-                        },
-                        child: const Text("Potvrdi ocenu", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                      const Text("Opšta ocena", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      const SizedBox(height: 10),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: List.generate(5, (index) {
+                          return GestureDetector(
+                            onTap: () => setModalState(() => odabranaOcena = index + 1),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 5),
+                              child: Icon(index < odabranaOcena ? Icons.star : Icons.star_border, color: Colors.amber, size: 40),
+                            ),
+                          );
+                        }),
                       ),
-                    ),
-                  ],
+                      
+                      const Divider(height: 30),
+
+                      const Text("Detalji transakcije", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      const SizedBox(height: 5),
+                      
+                      SwitchListTile(
+                        title: const Text("Da li je opis sata bio tačan?", style: TextStyle(fontSize: 14)),
+                        value: tacanOpis,
+                        activeColor: Colors.blueAccent,
+                        contentPadding: EdgeInsets.zero,
+                        onChanged: (val) => setModalState(() => tacanOpis = val),
+                      ),
+                      SwitchListTile(
+                        title: const Text("Komunikacija je bila korektna?", style: TextStyle(fontSize: 14)),
+                        value: dobraKomunikacija,
+                        activeColor: Colors.blueAccent,
+                        contentPadding: EdgeInsets.zero,
+                        onChanged: (val) => setModalState(() => dobraKomunikacija = val),
+                      ),
+                      SwitchListTile(
+                        title: const Text("Stanje odgovara slikama?", style: TextStyle(fontSize: 14)),
+                        value: tacnoStanje,
+                        activeColor: Colors.blueAccent,
+                        contentPadding: EdgeInsets.zero,
+                        onChanged: (val) => setModalState(() => tacnoStanje = val),
+                      ),
+
+                      const SizedBox(height: 15),
+                      const Text("Tvoj komentar (opciono)", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      const SizedBox(height: 10),
+                      CupertinoTextField(
+                        controller: komentarController,
+                        placeholder: "Napiši kratak utisak o prodavcu...",
+                        maxLines: 3,
+                        padding: const EdgeInsets.all(12),
+                        style: TextStyle(color: isDark ? Colors.white : Colors.black),
+                        decoration: BoxDecoration(
+                          color: isDark ? Colors.grey[900] : Colors.grey[100],
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+
+                      const SizedBox(height: 30),
+
+                      SizedBox(
+                        width: double.infinity,
+                        height: 55,
+                        child: CupertinoButton(
+                          color: Colors.blueAccent,
+                          borderRadius: BorderRadius.circular(15),
+                          onPressed: () {
+                            Navigator.pop(context);
+                            _oceniProdavca(prodavacId, widget.oglas['id'].toString(), odabranaOcena, tacanOpis, dobraKomunikacija, tacnoStanje, komentarController.text);
+                          },
+                          child: const Text("Potvrdi ocenu", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             );
@@ -343,6 +382,8 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
                   
                   const Text("INFORMACIJE O PRODAVCU", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)),
                   const SizedBox(height: 10),
+                  
+                  // OSVEŽAVANJE PRODAVCA I OCENE
                   FutureBuilder<Map<String, dynamic>?>(
                     future: Supabase.instance.client.from('profili').select().eq('id', oglas['user_id']).maybeSingle(),
                     builder: (context, snapshot) {
@@ -353,7 +394,12 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
                       final prodavac = snapshot.data ?? {};
                       final ime = prodavac['ime'] ?? prodavac['username'] ?? "Korisnik";
                       final telefon = prodavac['telefon'] ?? "";
-                      final ocena = prodavac['ocena']?.toString() ?? "Nema ocena"; 
+                      
+                      // Magija koja popravlja "0" bag. Formatira ocenu lepo.
+                      String ocena = "Nema ocena";
+                      if (prodavac['ocena'] != null && prodavac['ocena'] > 0) {
+                        ocena = double.parse(prodavac['ocena'].toString()).toStringAsFixed(1);
+                      }
 
                       WidgetsBinding.instance.addPostFrameCallback((_) {
                         if (mounted && telefonProdavca != telefon) {
@@ -429,15 +475,16 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
                                       child: CupertinoButton(
                                         padding: const EdgeInsets.symmetric(vertical: 10),
                                         color: Colors.transparent,
-                                        child: const Row(
+                                        // AKO JE OCENIO, POKAŽI ZELENU KVAČICU
+                                        child: Row(
                                           mainAxisAlignment: MainAxisAlignment.center,
                                           children: [
-                                            Icon(Icons.star, color: Colors.amber, size: 16),
-                                            SizedBox(width: 5),
-                                            Text("Oceni", style: TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold)),
+                                            Icon(vecOcenjeno ? CupertinoIcons.checkmark_alt : Icons.star, color: vecOcenjeno ? Colors.green : Colors.amber, size: 16),
+                                            const SizedBox(width: 5),
+                                            Text(vecOcenjeno ? "Ocenjeno" : "Oceni", style: TextStyle(color: vecOcenjeno ? Colors.green : Colors.blueAccent, fontWeight: FontWeight.bold)),
                                           ],
                                         ),
-                                        onPressed: () => _prikaziDijalogZaOcenu(oglas['user_id']),
+                                        onPressed: vecOcenjeno ? null : () => _prikaziDijalogZaOcenu(oglas['user_id']),
                                       ),
                                     ),
                                   ],
