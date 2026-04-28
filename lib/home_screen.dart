@@ -4,6 +4,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'oglas_detalji_screen.dart';
 
+// NAŠA NOVA PREMIUM BOJA
+const Color marineBlue = Color(0xFF0A2647);
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
   @override
@@ -22,7 +25,6 @@ class _HomeScreenState extends State<HomeScreen> {
   final minCenaController = TextEditingController();
   final maxCenaController = TextEditingController();
 
-  // --- NOVA BAZA BRENDOVA (AZBUČNI RED - 60 komada) ---
   final Map<String, List<String>> brendoviIModeli = {
     'Svi': [],
     'A. Lange & Söhne': ['1815', 'Datograph', 'Grand Lange 1', 'Lange 1', 'Saxonia', 'Zeitwerk', 'Richard Lange'],
@@ -93,7 +95,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final List<String> materijali = ['Sve', 'Čelik', 'Zlato (18k)', 'Titanijum', 'Platina', 'Keramika', 'Bronza', 'Guma/Plastika'];
   final List<String> materijaliNarukvice = ['Sve', 'Čelik', 'Koža', 'Guma', 'Tekstil/Nato', 'Titanijum', 'Zlato'];
   final List<String> bojeBrojcanika = ['Sve', 'Crna', 'Plava', 'Bela/Srebrna', 'Zelena', 'Siva', 'Zlatna', 'Druga'];
-  final List<String> stanja = ['Sve', ' Novo sa folijama', 'Kao novo', 'Odlično', 'Dobro', 'Vidljivi tragovi korišćenja'];
+  final List<String> stanja = ['Sve', 'Novo sa folijama', 'Kao novo', 'Odlično', 'Dobro', 'Vidljivi tragovi korišćenja'];
   final List<String> opcijeGarancije = ['Sve', 'Nema garanciju', 'Radna garancija', '1 godina', '2+ godine', 'Važeća fabrička'];
 
   @override
@@ -116,14 +118,12 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  // --- KORAK 2: FUNKCIJA SA ZABRANOM LAJKOVANJA SVOJIH OGLASA ---
   Future<void> _togglePraceni(String oglasId, String vlasnikOglasaId) async {
     if (user == null) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Morate biti prijavljeni da biste pratili oglase.")));
       return;
     }
 
-    // BLOKADA: Ne možeš da lajkuješ svoj sat
     if (user!.id == vlasnikOglasaId) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Ne možete staviti svoj oglas u omiljene!")));
       return;
@@ -151,7 +151,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  // --- ISPRAVLJENI FILTERI (DROPDOWN UMESTO IOS TOČKIĆA) ---
   Widget _buildDropdownFilter(String label, String? value, List<String> items, Function(String?) onChanged) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
@@ -159,9 +158,11 @@ class _HomeScreenState extends State<HomeScreen> {
       child: DropdownButtonFormField<String>(
         decoration: InputDecoration(
           labelText: label,
+          labelStyle: TextStyle(color: isDark ? Colors.grey[400] : marineBlue),
           filled: true,
           fillColor: isDark ? Colors.grey[800] : Colors.grey[100],
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: isDark ? Colors.blue[300]! : marineBlue, width: 1.5)),
           suffixIcon: value != null && value != 'Svi' && value != 'Sve' ? IconButton(
             icon: const Icon(CupertinoIcons.clear_circled, color: Colors.grey, size: 20),
             onPressed: () => onChanged(null),
@@ -177,11 +178,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _otvoriFiltere() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accentColor = isDark ? Colors.blue[300]! : marineBlue;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => StatefulBuilder( // StatefulBuilder osvezava filter prozor na klik
+      builder: (context) => StatefulBuilder(
         builder: (BuildContext context, StateSetter setModalState) {
           return Container(
             height: MediaQuery.of(context).size.height * 0.9,
@@ -231,21 +234,24 @@ class _HomeScreenState extends State<HomeScreen> {
                     title: Text("Mora da ima kutiju", style: TextStyle(color: isDark ? Colors.white : Colors.black)),
                     value: filterKutija ?? false,
                     onChanged: (v) { setModalState(() => filterKutija = v! ? true : null); setState(() => filterKutija = v! ? true : null); },
-                    activeColor: Colors.blue,
+                    activeColor: accentColor,
                   ),
                   CheckboxListTile(
                     title: Text("Mora da ima papire", style: TextStyle(color: isDark ? Colors.white : Colors.black)),
                     value: filterPapiri ?? false,
                     onChanged: (v) { setModalState(() => filterPapiri = v! ? true : null); setState(() => filterPapiri = v! ? true : null); },
-                    activeColor: Colors.blue,
+                    activeColor: accentColor,
                   ),
 
                   const SizedBox(height: 30),
                   SizedBox(
                     width: double.infinity,
-                    child: CupertinoButton.filled(
+                    height: 55,
+                    child: CupertinoButton(
+                      color: accentColor,
+                      borderRadius: BorderRadius.circular(12),
                       onPressed: () { Navigator.pop(context); },
-                      child: const Text("Pretraži", style: TextStyle(fontWeight: FontWeight.bold)),
+                      child: const Text("Pretraži", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 16)),
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -261,22 +267,22 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accentColor = isDark ? Colors.blue[300]! : marineBlue;
     
-    // OVO JE MAGIJA ZA RESPONSIVAN EKRAN
     final screenWidth = MediaQuery.of(context).size.width;
-    int brojKolona = 2; // Po defaultu za telefon je 2
+    int brojKolona = 2; 
     if (screenWidth > 1200) {
-      brojKolona = 6; // Širok PC ekran -> 6 kolona
+      brojKolona = 6; 
     } else if (screenWidth > 900) {
-      brojKolona = 4; // Manji PC ekran ili tablet u položenom položaju -> 4 kolone
+      brojKolona = 4; 
     } else if (screenWidth > 600) {
-      brojKolona = 3; // Veliki telefoni/mali tableti -> 3 kolone
+      brojKolona = 3; 
     }
     
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text("NadjiSat", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 24)),
+        title: const Text("NadjiSat", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 24, letterSpacing: 1.2)),
         centerTitle: true,
       ),
       body: Column(
@@ -300,7 +306,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(color: isDark ? Colors.grey[800] : Colors.white, borderRadius: BorderRadius.circular(10)),
-                    child: Icon(CupertinoIcons.slider_horizontal_3, color: isDark ? Colors.white : Colors.black),
+                    child: Icon(CupertinoIcons.slider_horizontal_3, color: isDark ? Colors.white : marineBlue),
                   ),
                 )
               ],
@@ -351,7 +357,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   itemBuilder: (context, index) {
                     final sat = satovi[index];
                     final oglasId = sat['id'].toString(); 
-                    final vlasnikId = sat['user_id'].toString(); // IZVLACIMO ID VLASNIKA OGLASA
+                    final vlasnikId = sat['user_id'].toString(); 
                     
                     final slikeStr = sat['slike']?.toString() ?? "";
                     
@@ -398,9 +404,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text(sat['cena_dogovor'] == true ? "Po dogovoru" : "${sat['cena'] ?? '0'} €", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: isDark ? Colors.white : Colors.black)),
+                                      Text(sat['cena_dogovor'] == true ? "Po dogovoru" : "${sat['cena'] ?? '0'} €", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: isDark ? Colors.white : marineBlue)),
                                       const SizedBox(height: 2),
-                                      Text("${sat['brend'] ?? 'Nepoznat'}", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.blueAccent)),
+                                      Text("${sat['brend'] ?? 'Nepoznat'}", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: accentColor)),
                                       Text("${sat['model'] ?? ''}", style: const TextStyle(fontSize: 11, color: Colors.grey), maxLines: 1, overflow: TextOverflow.ellipsis),
                                     ],
                                   ),
@@ -411,7 +417,6 @@ class _HomeScreenState extends State<HomeScreen> {
                               top: 5,
                               right: 5,
                               child: GestureDetector(
-                                // ŠALJEMO ID OGLASA I ID VLASNIKA OGLASA U FUNKCIJU
                                 onTap: () => _togglePraceni(oglasId, vlasnikId),
                                 child: Container(
                                   padding: const EdgeInsets.all(6),

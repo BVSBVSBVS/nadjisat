@@ -33,25 +33,31 @@ class MyApp extends StatelessWidget {
           // 3. ODLUČUJE KOJA TEMA SE KORISTI
           themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
           
-          // --- SVETLA TEMA (Kao do sada) ---
+          // --- SVETLA TEMA (Premium Marine Plava) ---
           theme: ThemeData(
             brightness: Brightness.light,
-            scaffoldBackgroundColor: const Color(0xFFF2F2F7),
+            primaryColor: const Color(0xFF0A2647), // Premium Marine
+            scaffoldBackgroundColor: const Color(0xFFF8F9FA), // Skupa, jako svetlo siva
             appBarTheme: const AppBarTheme(
-              backgroundColor: Color(0xFF89CFF0), // Bebi plava
+              backgroundColor: Color(0xFF0A2647), // Tamno plavi gornji meni
               foregroundColor: Colors.white,
               elevation: 0,
             ),
             bottomNavigationBarTheme: const BottomNavigationBarThemeData(
               backgroundColor: Colors.white,
-              selectedItemColor: Colors.blue,
+              selectedItemColor: Color(0xFF0A2647), // Zamenjena ona obična plava
               unselectedItemColor: Colors.grey,
+            ),
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: const Color(0xFF0A2647),
+              primary: const Color(0xFF0A2647),
             ),
           ),
           
-          // --- TAMNA TEMA (Dark Mode) ---
+          // --- TAMNA TEMA (Apple stil) ---
           darkTheme: ThemeData(
             brightness: Brightness.dark,
+            primaryColor: const Color(0xFF0A2647),
             scaffoldBackgroundColor: const Color(0xFF000000), // Skroz crna
             appBarTheme: const AppBarTheme(
               backgroundColor: Color(0xFF1C1C1E), // Tamno siva Apple
@@ -60,10 +66,15 @@ class MyApp extends StatelessWidget {
             ),
             bottomNavigationBarTheme: const BottomNavigationBarThemeData(
               backgroundColor: Color(0xFF1C1C1E),
-              selectedItemColor: Colors.blue,
+              selectedItemColor: Colors.white, // Bela za selekciju da bi "vrištala" iz mraka
               unselectedItemColor: Colors.grey,
             ),
             cardColor: const Color(0xFF1C1C1E), // Boja kartica u tamnoj temi
+            colorScheme: ColorScheme.fromSeed(
+              brightness: Brightness.dark,
+              seedColor: const Color(0xFF0A2647),
+              primary: Colors.blue[300]!, // Svetliji akcenat za tamni mod da se tekstovi dobro vide
+            ),
           ),
           
           home: const MainLayout(), // Zameni sa svojim početnim ekranom ako se zove drugačije
