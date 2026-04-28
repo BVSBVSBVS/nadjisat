@@ -1,22 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'main_layout.dart'; // Proveri da li ti se početni fajl ovako zove (ili login_screen.dart)
+import 'package:flutter_dotenv/flutter_dotenv.dart'; // <--- DODALI SMO OVO
 
-// 1. OVO JE GLOBALNI PREKIDAČ ZA CELU APLIKACIJU
+import 'main_layout.dart'; 
+
 final ValueNotifier<bool> isDarkModeGlobal = ValueNotifier(false);
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // OSTAVI TVOJE KLJUČEVE OVDE!
+  // Učitavamo tajni sef pre nego što se aplikacija upali
+  await dotenv.load(fileName: ".env");
+  
+  // SADA SU KLJUČEVI SAKRIVENI!
   await Supabase.initialize(
-    url: 'https://gvayuhokaipgeipfsiok.supabase.co', 
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd2YXl1aG9rYWlwZ2VpcGZzaW9rIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0NjI2MTcsImV4cCI6MjA5MjAzODYxN30.gbOXUpldHzwUGy1GMNTA_B5e_oPUIi1yCoIv9H6v53A',
+    url: dotenv.env['SUPABASE_URL']!, 
+    anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
   );
 
   runApp(const MyApp());
 }
 
+// ... ostatak tvog koda ostaje isti (class MyApp extends StatelessWidget...)
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
