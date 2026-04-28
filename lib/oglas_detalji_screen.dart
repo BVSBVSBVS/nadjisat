@@ -6,6 +6,9 @@ import 'package:url_launcher/url_launcher.dart';
 import 'edit_oglas_screen.dart'; // <-- Promeni ako ti se fajl zove drugacije
 import 'javni_profil_screen.dart';
 
+// NAŠA LUKSUZNA BOJA
+const Color marineBlue = Color(0xFF0A2647);
+
 class OglasDetaljiScreen extends StatefulWidget {
   final Map<String, dynamic> oglas;
   const OglasDetaljiScreen({super.key, required this.oglas});
@@ -20,7 +23,7 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
   final trenutniKorisnik = Supabase.instance.client.auth.currentUser;
   
   bool vecOcenjeno = false;
-  String? lokalnaOcena; // NOVO: Čuva instant ocenu da se odmah prikaže na ekranu!
+  String? lokalnaOcena; 
 
   @override
   void initState() {
@@ -64,13 +67,14 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
   }
 
   void _prikaziPotvrduBrisanja() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     showCupertinoDialog(
       context: context,
       builder: (context) => CupertinoAlertDialog(
         title: const Text("Obriši oglas"),
         content: const Text("Da li ste sigurni da želite da trajno obrišete ovaj oglas?"),
         actions: [
-          CupertinoDialogAction(child: const Text("Otkaži"), onPressed: () => Navigator.pop(context)),
+          CupertinoDialogAction(child: Text("Otkaži", style: TextStyle(color: isDark ? Colors.white : marineBlue)), onPressed: () => Navigator.pop(context)),
           CupertinoDialogAction(isDestructiveAction: true, onPressed: () { Navigator.pop(context); _obrisiOglas(); }, child: const Text("Obriši")),
         ],
       ),
@@ -155,7 +159,7 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Ocena uspešno sačuvana!")));
          setState(() {
            vecOcenjeno = true;
-           lokalnaOcena = prosek.toStringAsFixed(1); // OVO INSTANT MENJA EKRAN!
+           lokalnaOcena = prosek.toStringAsFixed(1); 
          }); 
       }
     } catch(e) {
@@ -180,11 +184,11 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
         bool tacanOpis = true;
         bool dobraKomunikacija = true;
         bool tacnoStanje = true;
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final accentColor = isDark ? Colors.blue[300]! : marineBlue;
 
         return StatefulBuilder(
           builder: (context, setModalState) {
-            final isDark = Theme.of(context).brightness == Brightness.dark;
-            
             return Container(
               padding: EdgeInsets.only(
                 left: 24, right: 24, top: 24,
@@ -230,21 +234,21 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
                       SwitchListTile(
                         title: const Text("Da li je opis sata bio tačan?", style: TextStyle(fontSize: 14)),
                         value: tacanOpis,
-                        activeColor: Colors.blueAccent,
+                        activeColor: accentColor,
                         contentPadding: EdgeInsets.zero,
                         onChanged: (val) => setModalState(() => tacanOpis = val),
                       ),
                       SwitchListTile(
                         title: const Text("Komunikacija je bila korektna?", style: TextStyle(fontSize: 14)),
                         value: dobraKomunikacija,
-                        activeColor: Colors.blueAccent,
+                        activeColor: accentColor,
                         contentPadding: EdgeInsets.zero,
                         onChanged: (val) => setModalState(() => dobraKomunikacija = val),
                       ),
                       SwitchListTile(
                         title: const Text("Stanje odgovara slikama?", style: TextStyle(fontSize: 14)),
                         value: tacnoStanje,
-                        activeColor: Colors.blueAccent,
+                        activeColor: accentColor,
                         contentPadding: EdgeInsets.zero,
                         onChanged: (val) => setModalState(() => tacnoStanje = val),
                       ),
@@ -261,6 +265,7 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
                         decoration: BoxDecoration(
                           color: isDark ? Colors.grey[900] : Colors.grey[100],
                           borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: isDark ? Colors.grey[800]! : Colors.grey[300]!)
                         ),
                       ),
 
@@ -270,7 +275,7 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
                         width: double.infinity,
                         height: 55,
                         child: CupertinoButton(
-                          color: Colors.blueAccent,
+                          color: accentColor,
                           borderRadius: BorderRadius.circular(15),
                           onPressed: () {
                             Navigator.pop(context);
@@ -298,7 +303,7 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(naslov, style: const TextStyle(color: Colors.grey, fontSize: 14)),
-          Text(vrednost, style: TextStyle(color: isDark ? Colors.white : Colors.black, fontWeight: FontWeight.w600, fontSize: 14)),
+          Text(vrednost, style: TextStyle(color: isDark ? Colors.white : Colors.black, fontWeight: FontWeight.w700, fontSize: 14)),
         ],
       ),
     );
@@ -307,6 +312,7 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accentColor = isDark ? Colors.blue[300]! : marineBlue;
     final oglas = widget.oglas;
     
     final slikeStr = oglas['slike']?.toString() ?? "";
@@ -330,7 +336,7 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
                 alignment: Alignment.bottomCenter,
                 children: [
                   SizedBox(
-                    height: 350,
+                    height: 400, // Malo veća slika za premium feel
                     child: PageView.builder(
                       itemCount: slike.length,
                       onPageChanged: (index) => setState(() => _trenutnaSlika = index),
@@ -341,11 +347,11 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
                   ),
                   if (slike.length > 1)
                     Positioned(
-                      bottom: 10,
+                      bottom: 15,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(color: Colors.black.withOpacity(0.6), borderRadius: BorderRadius.circular(20)),
-                        child: Text("${_trenutnaSlika + 1} / ${slike.length}", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(color: Colors.black.withOpacity(0.7), borderRadius: BorderRadius.circular(20)),
+                        child: Text("${_trenutnaSlika + 1} / ${slike.length}", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
                       ),
                     )
                 ],
@@ -356,13 +362,13 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(oglas['naslov'] ?? "Sat", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black)),
+                  Text(oglas['naslov'] ?? "Sat", style: TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: isDark ? Colors.white : Colors.black)),
                   const SizedBox(height: 8),
                   Text(
                     oglas['cena_dogovor'] == true ? "Cena po dogovoru" : "${oglas['cena']} ${oglas['valuta'] ?? '€'}", 
-                    style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: Colors.blue)
+                    style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: accentColor) // PREMIUM PLAVA ZA CENU
                   ),
-                  const SizedBox(height: 5),
+                  const SizedBox(height: 8),
                   Row(
                     children: [
                       const Icon(CupertinoIcons.location_solid, size: 16, color: Colors.grey),
@@ -371,9 +377,9 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
                     ],
                   ),
                   
-                  const SizedBox(height: 25),
+                  const SizedBox(height: 30),
                   
-                  const Text("INFORMACIJE O PRODAVCU", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)),
+                  const Text("INFORMACIJE O PRODAVCU", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey, letterSpacing: 1.2)),
                   const SizedBox(height: 10),
                   
                   FutureBuilder<Map<String, dynamic>?>(
@@ -384,10 +390,10 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
                       }
                       
                       final prodavac = snapshot.data ?? {};
-                      final ime = prodavac['ime'] ?? prodavac['username'] ?? "Korisnik";
+                      // AKO NEMA PROFILA, PIŠE "PROFIL OBRISAN" DA ZNAŠ U ČEMU JE FORA
+                      final ime = prodavac['ime'] ?? prodavac['username'] ?? "Profil obrisan/Nepoznat";
                       final telefon = prodavac['telefon'] ?? "";
                       
-                      // NOVO: Magija koja prvo proverava da li imamo LOKALNU ocenu (npr. tek ocenjeno), pa tek onda povlači iz baze
                       String ocena = "Nema ocena";
                       if (lokalnaOcena != null) {
                         ocena = lokalnaOcena!;
@@ -404,8 +410,9 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
                       return Container(
                         padding: const EdgeInsets.all(15),
                         decoration: BoxDecoration(
-                          color: isDark ? Colors.grey[900] : Colors.grey[100],
+                          color: isDark ? Colors.grey[900] : Colors.white,
                           borderRadius: BorderRadius.circular(15),
+                          border: Border.all(color: isDark ? Colors.grey[800]! : Colors.grey[300]!)
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -414,8 +421,8 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
                               children: [
                                 CircleAvatar(
                                   radius: 25,
-                                  backgroundColor: Colors.blueAccent.withOpacity(0.2),
-                                  child: const Icon(CupertinoIcons.person_fill, color: Colors.blueAccent),
+                                  backgroundColor: accentColor.withOpacity(0.1),
+                                  child: Icon(CupertinoIcons.person_fill, color: accentColor),
                                 ),
                                 const SizedBox(width: 15),
                                 Expanded(
@@ -441,11 +448,11 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
                               children: [
                                 const Icon(CupertinoIcons.phone_fill, color: Colors.green, size: 18),
                                 const SizedBox(width: 10),
-                                Text(telefon.isNotEmpty ? telefon : "Nije unet broj", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: isDark ? Colors.white : Colors.black)),
+                                Text(telefon.isNotEmpty ? telefon : "Nije unet broj", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: isDark ? Colors.white : Colors.black)),
                               ],
                             ),
                             
-                            if (!jeMojOglas) ...[
+                            if (!jeMojOglas && snapshot.data != null) ...[
                               const SizedBox(height: 15),
                               SizedBox(
                                 width: double.infinity,
@@ -455,10 +462,11 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
                                       child: CupertinoButton(
                                         padding: const EdgeInsets.symmetric(vertical: 10),
                                         color: Colors.transparent,
-                                        child: const Text("Vidi profil", style: TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold)),
+                                        child: Text("Vidi profil", style: TextStyle(color: accentColor, fontWeight: FontWeight.bold)),
                                         onPressed: () {
                                           Navigator.push(
                                             context,
+                                            // POPRAVLJENO ONO CRVENO SA .toString()
                                             MaterialPageRoute(builder: (context) => JavniProfilScreen(prodavacId: oglas['user_id'].toString())),
                                           );
                                         },
@@ -474,7 +482,7 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
                                           children: [
                                             Icon(vecOcenjeno ? CupertinoIcons.checkmark_alt : Icons.star, color: vecOcenjeno ? Colors.green : Colors.amber, size: 16),
                                             const SizedBox(width: 5),
-                                            Text(vecOcenjeno ? "Ocenjeno" : "Oceni", style: TextStyle(color: vecOcenjeno ? Colors.green : Colors.blueAccent, fontWeight: FontWeight.bold)),
+                                            Text(vecOcenjeno ? "Ocenjeno" : "Oceni", style: TextStyle(color: vecOcenjeno ? Colors.green : accentColor, fontWeight: FontWeight.bold)),
                                           ],
                                         ),
                                         onPressed: vecOcenjeno ? null : () => _prikaziDijalogZaOcenu(oglas['user_id']),
@@ -490,12 +498,12 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
                     }
                   ),
 
-                  const SizedBox(height: 25),
+                  const SizedBox(height: 30),
                   const Text("Detalji", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 10),
                   Container(
                     padding: const EdgeInsets.all(15),
-                    decoration: BoxDecoration(color: isDark ? Colors.grey[900] : Colors.white, borderRadius: BorderRadius.circular(15), border: Border.all(color: Colors.grey.withOpacity(0.2))),
+                    decoration: BoxDecoration(color: isDark ? Colors.grey[900] : Colors.white, borderRadius: BorderRadius.circular(15), border: Border.all(color: isDark ? Colors.grey[800]! : Colors.grey[300]!)),
                     child: Column(
                       children: [
                         _buildSpecRed("Brend", oglas['brend'], isDark),
@@ -518,12 +526,12 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: 25),
+                  const SizedBox(height: 30),
                   if (oglas['opis'] != null && oglas['opis'].toString().isNotEmpty) ...[
                     const Text("Opis prodavca", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 10),
-                    Text(oglas['opis'], style: TextStyle(fontSize: 15, color: isDark ? Colors.grey[300] : Colors.grey[800], height: 1.5)),
-                    const SizedBox(height: 25),
+                    Text(oglas['opis'], style: TextStyle(fontSize: 15, color: isDark ? Colors.grey[300] : Colors.grey[800], height: 1.6)),
+                    const SizedBox(height: 30),
                   ],
                   if (oglas['zamena'] == true)
                     Container(
@@ -542,8 +550,8 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
-            color: Theme.of(context).scaffoldBackgroundColor,
-            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, -5))],
+            color: isDark ? const Color(0xFF1C1C1E) : Colors.white,
+            boxShadow: [BoxShadow(color: Colors.black.withOpacity(isDark ? 0.3 : 0.05), blurRadius: 10, offset: const Offset(0, -5))],
           ),
           child: jeMojOglas 
             ? Row(
@@ -551,7 +559,7 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
                   Expanded(
                     child: CupertinoButton(
                       padding: EdgeInsets.zero,
-                      color: Colors.blueAccent,
+                      color: accentColor,
                       borderRadius: BorderRadius.circular(12),
                       onPressed: _idiNaIzmenuOglasa,
                       child: const Row(
@@ -599,7 +607,7 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
                           children: [
                             Icon(CupertinoIcons.phone_fill, color: Colors.white),
                             SizedBox(width: 8),
-                            Text("Pozovi", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                            Text("Pozovi", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
                           ],
                         ),
                       ),
@@ -610,7 +618,7 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
-                          _maloKontaktDugme(CupertinoIcons.chat_bubble_text_fill, Colors.blueAccent, () => _posaljiSMS(naslovSata)),
+                          _maloKontaktDugme(CupertinoIcons.chat_bubble_text_fill, accentColor, () => _posaljiSMS(naslovSata)),
                           _maloKontaktDugme(Icons.wechat, const Color(0xFF25D366), () => _otvoriWhatsApp(naslovSata)), 
                           _maloKontaktDugme(Icons.phone_in_talk, const Color(0xFF7360F2), _otvoriViber), 
                         ],
