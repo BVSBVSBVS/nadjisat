@@ -3,10 +3,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'edit_oglas_screen.dart'; // <-- Promeni ako ti se fajl zove drugacije
+import 'edit_oglas_screen.dart'; 
 import 'javni_profil_screen.dart';
 
-// NAŠA LUKSUZNA BOJA
 const Color marineBlue = Color(0xFF0A2647);
 
 class OglasDetaljiScreen extends StatefulWidget {
@@ -131,6 +130,7 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
     }
   }
 
+  // --- OVO JE NOVA FUNKCIJA KOJA BROJI PETICE I UPISUJE U BAZU ---
   Future<void> _oceniProdavca(String prodavacId, String oglasId, int zvezdice, bool opis, bool komunikacija, bool stanje, String komentarText) async {
     if (trenutniKorisnik == null) return;
 
@@ -146,13 +146,28 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
         'komentar': komentarText,
       });
 
+      // MAGIJA KOJA BROJI PETICE
       final res = await Supabase.instance.client.from('ocene').select('vrednost').eq('ocenjeni_id', prodavacId);
       double prosek = 0.0;
+      int ukupnoPetica = 0; 
+      
       if (res.isNotEmpty) {
         double zbir = 0;
-        for (var r in res) { zbir += (r['vrednost'] as num).toDouble(); }
+        for (var r in res) { 
+          double ocenaVrednost = (r['vrednost'] as num).toDouble();
+          zbir += ocenaVrednost; 
+          // Ako je dobio 5, dodaj u brojač!
+          if (ocenaVrednost == 5.0) {
+            ukupnoPetica++;
+          }
+        }
         prosek = zbir / res.length;
-        await Supabase.instance.client.from('profili').update({'ocena': prosek}).eq('id', prodavacId);
+        
+        // Upisujemo u njegov profil novu ocenu i koliko ima petica
+        await Supabase.instance.client.from('profili').update({
+          'ocena': prosek,
+          'broj_petica': ukupnoPetica
+        }).eq('id', prodavacId);
       }
 
       if (mounted) {
@@ -336,7 +351,7 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
                 alignment: Alignment.bottomCenter,
                 children: [
                   SizedBox(
-                    height: 400, // Malo veća slika za premium feel
+                    height: 400, 
                     child: PageView.builder(
                       itemCount: slike.length,
                       onPageChanged: (index) => setState(() => _trenutnaSlika = index),
@@ -366,7 +381,7 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
                   const SizedBox(height: 8),
                   Text(
                     oglas['cena_dogovor'] == true ? "Cena po dogovoru" : "${oglas['cena']} ${oglas['valuta'] ?? '€'}", 
-                    style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: accentColor) // PREMIUM PLAVA ZA CENU
+                    style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: accentColor) 
                   ),
                   const SizedBox(height: 8),
                   Row(
@@ -390,7 +405,6 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
                       }
                       
                       final prodavac = snapshot.data ?? {};
-                      // AKO NEMA PROFILA, PIŠE "PROFIL OBRISAN" DA ZNAŠ U ČEMU JE FORA
                       final ime = prodavac['ime'] ?? prodavac['username'] ?? "Profil obrisan/Nepoznat";
                       final telefon = prodavac['telefon'] ?? "";
                       
@@ -466,7 +480,6 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
                                         onPressed: () {
                                           Navigator.push(
                                             context,
-                                            // POPRAVLJENO ONO CRVENO SA .toString()
                                             MaterialPageRoute(builder: (context) => JavniProfilScreen(prodavacId: oglas['user_id'].toString())),
                                           );
                                         },
@@ -637,7 +650,7 @@ class _OglasDetaljiScreenState extends State<OglasDetaljiScreen> {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: boja.withOpacity(0.1),
+          color: boja.withOpacity(0.1), 
           shape: BoxShape.circle,
         ),
         child: Icon(ikona, color: boja, size: 24),
