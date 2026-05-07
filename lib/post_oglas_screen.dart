@@ -3,6 +3,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 
+import 'main_layout.dart'; // DODATO DA BI MOGAO DA SE VRATI NA GLAVNI EKRAN
+
+const Color marineBlue = Color(0xFF0A2647); // NAŠA PREMIUM BOJA
+
 class PostOglasScreen extends StatefulWidget {
   const PostOglasScreen({super.key});
   @override
@@ -36,7 +40,7 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
   final lokacijaController = TextEditingController();
   final opisController = TextEditingController();
 
-  // --- NOVA BAZA BRENDOVA (AZBUČNI RED) ---
+  // --- BAZA BRENDOVA ---
   final Map<String, List<String>> brendoviIModeli = {
     'A. Lange & Söhne': ['1815', 'Datograph', 'Grand Lange 1', 'Lange 1', 'Saxonia', 'Zeitwerk', 'Richard Lange'],
     'Audemars Piguet': ['Royal Oak', 'Royal Oak Offshore', 'Code 11.59', 'Jules Audemars', 'Millenary'],
@@ -114,7 +118,8 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
   final List<String> valute = ['EUR', 'RSD', 'KM'];
 
   Future<void> _izaberiSlike() async {
-    final List<XFile> slike = await _picker.pickMultiImage();
+    // DODATA KOMANDA ZA 100% HD KVALITET SLIKE
+    final List<XFile> slike = await _picker.pickMultiImage(imageQuality: 100);
     if (slike.isNotEmpty) {
       setState(() {
         izabraneSlike.addAll(slike);
@@ -184,8 +189,19 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
       });
 
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Oglas uspešno postavljen!")));
-      Navigator.pop(context); 
+      
+      // ZELENA PORUKA DA JE SVE PROSLO
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text("Oglas uspešno postavljen!", style: TextStyle(fontWeight: FontWeight.bold)), 
+        backgroundColor: Colors.green
+      ));
+      
+      // MAGIJA KOJA REŠAVA BELI EKRAN - Vraća te na početni ekran!
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const MainLayout()),
+        (Route<dynamic> route) => false,
+      );
 
     } catch (e) {
       if(!context.mounted) return;
@@ -194,7 +210,6 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
     }
   }
 
-  // --- MAGIJA ZA PONIŠTAVANJE (X DUGME) ---
   Widget _buildDropdown(String label, String? value, List<String> items, Function(String?) onChanged) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
@@ -202,13 +217,14 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
       child: DropdownButtonFormField<String>(
         decoration: InputDecoration(
           labelText: label,
+          labelStyle: TextStyle(color: isDark ? Colors.grey[400] : marineBlue),
           filled: true,
           fillColor: isDark ? Colors.grey[800] : Colors.white,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-          // Pojavljuje se malo "X" kada je polje popunjeno
+          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: isDark ? Colors.blue[300]! : marineBlue, width: 1.5)),
           suffixIcon: value != null ? IconButton(
             icon: const Icon(CupertinoIcons.clear_circled, color: Colors.grey, size: 20),
-            onPressed: () => onChanged(null), // Ovo ga vraca na null!
+            onPressed: () => onChanged(null),
           ) : null,
         ),
         dropdownColor: isDark ? Colors.grey[800] : Colors.white,
@@ -220,13 +236,15 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
   }
 
   Widget _buildSectionHeader(String title, IconData icon) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accentColor = isDark ? Colors.blue[300]! : marineBlue; // OFARBANO U PREMIUM PLAVU
     return Padding(
       padding: const EdgeInsets.only(top: 20, bottom: 10),
       child: Row(
         children: [
-          Icon(icon, color: Colors.blue),
+          Icon(icon, color: accentColor),
           const SizedBox(width: 8),
-          Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          Text(title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: isDark ? Colors.white : Colors.black87)),
         ],
       ),
     );
@@ -235,12 +253,22 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accentColor = isDark ? Colors.blue[300]! : marineBlue;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(title: const Text("Postavi oglas", style: TextStyle(fontWeight: FontWeight.bold))),
       body: isUploading 
-          ? const Center(child: CupertinoActivityIndicator(radius: 20)) 
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const CupertinoActivityIndicator(radius: 20),
+                  const SizedBox(height: 15),
+                  Text("Slanje HD slika na server...", style: TextStyle(color: isDark ? Colors.grey[400] : Colors.grey[700], fontWeight: FontWeight.bold))
+                ],
+              )
+            ) 
           : Form(
               key: _formKey,
               child: ListView(
@@ -255,7 +283,7 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
                       children: [
                         _buildDropdown("Brend *", izabranBrend, brendoviIModeli.keys.toList(), (v) => setState(() { 
                           izabranBrend = v; 
-                          izabranModel = null; // Brise model kad obrises brend
+                          izabranModel = null; 
                         })),
                         if (izabranBrend != null && brendoviIModeli[izabranBrend] != null) 
                           _buildDropdown("Model *", izabranModel, brendoviIModeli[izabranBrend]!, (v) => setState(() => izabranModel = v)),
@@ -304,13 +332,13 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
                           title: Text("Ima originalnu kutiju", style: TextStyle(color: isDark ? Colors.white : Colors.black)),
                           value: imaKutiju,
                           onChanged: (v) => setState(() => imaKutiju = v!),
-                          activeColor: Colors.blue,
+                          activeColor: accentColor,
                         ),
                         CheckboxListTile(
                           title: Text("Ima originalne papire", style: TextStyle(color: isDark ? Colors.white : Colors.black)),
                           value: imaPapire,
                           onChanged: (v) => setState(() => imaPapire = v!),
-                          activeColor: Colors.blue,
+                          activeColor: accentColor,
                         ),
                         CupertinoTextField(
                           style: TextStyle(color: isDark ? Colors.white : Colors.black),
@@ -326,9 +354,10 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
                         const SizedBox(height: 15),
                         SizedBox(
                           width: double.infinity,
-                          child: CupertinoButton.filled(
+                          child: CupertinoButton(
+                            color: isDark ? Colors.grey[800] : Colors.grey[300],
                             onPressed: _izaberiSlike,
-                            child: const Text("📸 Dodaj slike sata (Max 6)"),
+                            child: Text("📸 Dodaj slike sata (Max 6)", style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontWeight: FontWeight.bold)),
                           ),
                         ),
                         if (izabraneSlike.isNotEmpty)
@@ -370,7 +399,7 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
                           title: Text("Moguća zamena", style: TextStyle(color: isDark ? Colors.white : Colors.black)),
                           value: zamena,
                           onChanged: (v) => setState(() => zamena = v!),
-                          activeColor: Colors.blue,
+                          activeColor: accentColor,
                         ),
                         CupertinoTextField(
                           style: TextStyle(color: isDark ? Colors.white : Colors.black),
@@ -393,7 +422,7 @@ class _PostOglasScreenState extends State<PostOglasScreen> {
                     width: double.infinity,
                     height: 55,
                     child: CupertinoButton(
-                      color: Colors.blue,
+                      color: accentColor, // PREMIUM BOJA
                       borderRadius: BorderRadius.circular(15),
                       onPressed: _postaviOglas,
                       child: const Text("🚀 Objavi Oglas", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
