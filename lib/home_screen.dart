@@ -39,7 +39,6 @@ class _HomeScreenState extends State<HomeScreen> {
     'TAG Heuer': ['Carrera', 'Monaco', 'Aquaracer', 'Formula 1'],
     'Tudor': ['Black Bay', 'Pelagos', 'Royal'],
     'Zenith': ['Chronomaster', 'Defy', 'Pilot'],
-    // Možeš vratiti punu listu, skratio sam je ovde zbog preglednosti
   };
 
   final List<String> namene = ['Sve', 'Dres (Dress)', 'Ronilački (Diver)', 'Hronograf (Chronograph)', 'Pilot (Aviator)', 'Sportski/GADA', 'Luksuzni', 'Smartwatch'];
@@ -274,26 +273,22 @@ class _HomeScreenState extends State<HomeScreen> {
                     }
                     final isPracen = praceniOglasiIds.contains(oglasId);
 
-                    // UMECEMO FUTURE BUILDER DA BISTE VIDELI STATUS PRODAVCA ZA SVAKI OGLAS
                     return FutureBuilder<Map<String, dynamic>?>(
                       future: Supabase.instance.client.from('profili').select('pravno_lice, partner, ocena, broj_petica').eq('id', vlasnikId).maybeSingle(),
                       builder: (context, profSnapshot) {
                         final prof = profSnapshot.data ?? {};
                         
-                        // NAŠA LOGIKA ZA STATUSE
                         bool jeFirma = prof['pravno_lice'] == true;
                         bool jePartner = prof['partner'] == true;
                         double ocena = double.tryParse(prof['ocena']?.toString() ?? '0') ?? 0.0;
                         int brojPetica = int.tryParse(prof['broj_petica']?.toString() ?? '0') ?? 0;
                         
-                        // Uslov koji si tražio: 10 petica i ocena >= 4.5
                         bool jeVerifikovan = (ocena >= 4.5 && brojPetica >= 10);
 
                         Color? okvirBoja;
                         String? bedzTekst;
                         Color? bedzBoja;
 
-                        // Hijerarhija (Partner gazi sve ostalo, zatim Firma, pa tek onda Verifikovan)
                         if (jePartner) {
                           okvirBoja = Colors.amber;
                           bedzBoja = Colors.amber;
@@ -314,11 +309,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             decoration: BoxDecoration(
                               color: isDark ? const Color(0xFF1C1C1E) : Colors.white, 
                               borderRadius: BorderRadius.circular(15), 
-                              // DODAJEMO SJAJAN OKVIR AKO IMA STATUS
                               border: okvirBoja != null ? Border.all(color: okvirBoja, width: 2) : null,
                               boxShadow: [
                                 BoxShadow(
-                                  // Ako ima status, senka sija u toj boji! Ako ne, obična senka.
                                   color: okvirBoja != null ? okvirBoja.withOpacity(0.4) : (isDark ? Colors.black54 : Colors.black12), 
                                   blurRadius: 8, offset: const Offset(0, 4)
                                 )
@@ -331,12 +324,14 @@ class _HomeScreenState extends State<HomeScreen> {
                                   children: [
                                     Expanded(
                                       child: ClipRRect(
-                                        borderRadius: const BorderRadius.vertical(top: Radius.circular(13)), // Malo manji radius zbog border-a
+                                        borderRadius: const BorderRadius.vertical(top: Radius.circular(13)),
                                         child: Container(
-                                          color: isDark ? Colors.grey[900] : Colors.grey[100],
+                                          // PROMENJENO: Providna pozadina da slika diše
+                                          color: Colors.transparent,
                                           width: double.infinity,
                                           child: (prvaSlika != null && prvaSlika.startsWith('http')) 
-                                              ? Image.network(prvaSlika, fit: BoxFit.cover, errorBuilder: (c, e, s) => const Icon(Icons.broken_image, size: 40, color: Colors.grey)) 
+                                              // PROMENJENO: BoxFit.contain umesto BoxFit.cover da se ne seku slike
+                                              ? Image.network(prvaSlika, fit: BoxFit.contain, errorBuilder: (c, e, s) => const Icon(Icons.broken_image, size: 40, color: Colors.grey)) 
                                               : const Icon(Icons.watch, size: 40, color: Colors.grey),
                                         ),
                                       ),
@@ -356,7 +351,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ],
                                 ),
                                 
-                                // DUGME ZA PRACENJE
                                 Positioned(
                                   top: 5,
                                   right: 5,
@@ -370,7 +364,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                 ),
 
-                                // OVO JE BEDŽ (ZELENI, ZLATNI ILI NARANDZASTI) U GORNJEM LEVOM UGLU
                                 if (bedzTekst != null)
                                   Positioned(
                                     top: 0,
